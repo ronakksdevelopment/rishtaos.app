@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>RishtaOS — Relationship Companion</title>
+<meta name="description" content="RishtaOS is a private relationship operating system for men — track your relationship uptime, never miss a special date, and stay a step ahead.">
+<meta name="theme-color" content="#101827">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RishtaOS">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+<!-- Splash -->
+<div class="splash" id="splash">
+  <div class="splash-logo"><i class="fa-solid fa-heart-circle-check"></i></div>
+  <h1>Rishta<span>OS</span></h1>
+  <p>Booting relationship kernel…</p>
+</div>
+
+<!-- Onboarding -->
+<div class="onboarding hide" id="onboarding">
+  <div class="ob-slides" id="obSlides">
+    <div class="ob-slide">
+      <div class="ob-illustration" style="background:linear-gradient(160deg,#101827,#1B2436);">
+        <i class="fa-solid fa-clock-rotate-left ob-icon-big"></i>
+      </div>
+      <h2>Relationship Uptime</h2>
+      <p>See exactly how long you two have been going strong — down to the second. Think of it as your relationship's status bar.</p>
+    </div>
+    <div class="ob-slide">
+      <div class="ob-illustration" style="background:linear-gradient(160deg,#3A8C87,#2C6B67);">
+        <i class="fa-solid fa-calendar-heart ob-icon-big"></i>
+      </div>
+      <h2>Never Forget a Date</h2>
+      <p>Anniversaries, birthdays, "that one dinner she mentioned once." Add it, and RishtaOS remembers so you don't have to panic later.</p>
+    </div>
+    <div class="ob-slide">
+      <div class="ob-illustration" style="background:linear-gradient(160deg,#E87568,#C2574A);">
+        <i class="fa-solid fa-calendar-days ob-icon-big"></i>
+      </div>
+      <h2>Period Awareness</h2>
+      <p>A private, gentle tracker to help you understand timing and show up with a little more care. Estimates only — not a medical tool.</p>
+    </div>
+  </div>
+  <div class="ob-dots" id="obDots"></div>
+  <div class="ob-footer">
+    <button class="ob-skip" id="obSkip">Skip</button>
+    <button class="btn btn-primary" id="obNext">Continue</button>
+  </div>
+</div>
+
+<div id="app" class="hide">
+
+  <!-- Sidebar (desktop) -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sl-icon"><i class="fa-solid fa-heart-circle-check"></i></div>
+      <span>Rishta<em>OS</em></span>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <button class="nav-item" data-screen="period"><i class="fa-solid fa-calendar-days"></i><span>Period Tracker</span></button>
+      <button class="nav-item nav-home active" data-screen="home"><div class="nav-home-circle"><i class="fa-solid fa-house"></i></div><span>Home</span></button>
+      <button class="nav-item" data-screen="dates"><i class="fa-solid fa-calendar-heart"></i><span>Special Dates</span></button>
+      <button class="nav-item" data-screen="profile"><i class="fa-solid fa-user"></i><span>Profile</span></button>
+    </nav>
+    <div class="sidebar-foot">RishtaOS Beta 1.0 · Local-only</div>
+  </aside>
+
+  <div class="main-col">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="greeting-wrap">
+        <div class="greeting" id="greetingText">Hey there <span class="wave">👋</span></div>
+        <div class="subgreeting" id="subGreeting">Support mode: ON.</div>
+      </div>
+      <button class="topbar-icon-btn" id="notifBtn" aria-label="Reminders"><i class="fa-solid fa-bell"></i><span class="dot hide" id="notifDot"></span></button>
+    </div>
+
+    <div class="install-banner hide" id="installBanner">
+      <div class="install-banner-inner">
+        <div class="ib-icon"><i class="fa-solid fa-download"></i></div>
+        <div class="ib-text"><strong>Install RishtaOS</strong><span>Add to home screen for the full app feel</span></div>
+        <button class="ib-btn" id="installBtn">Install</button>
+        <button class="ib-close" id="installDismiss" aria-label="Dismiss"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+
+    <!-- HOME SCREEN -->
+    <main class="screen" id="screen-home">
+      <section class="section" id="heroSection"></section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2 class="section-title">Quick actions</h2>
+        </div>
+        <div class="quick-actions">
+          <button class="quick-action" id="qaAddDate"><div class="qa-icon coral"><i class="fa-solid fa-calendar-plus"></i></div><span class="qa-label">Add Date</span></button>
+          <button class="quick-action" id="qaAddNote"><div class="qa-icon saffron"><i class="fa-solid fa-note-sticky"></i></div><span class="qa-label">Quick Note</span></button>
+          <button class="quick-action" id="qaPeriod"><div class="qa-icon teal"><i class="fa-solid fa-calendar-days"></i></div><span class="qa-label">Period</span></button>
+          <button class="quick-action" id="qaProfile"><div class="qa-icon navy"><i class="fa-solid fa-user"></i></div><span class="qa-label">Profile</span></button>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2 class="section-title">Coming up</h2>
+          <button class="section-link" id="seeAllDates">See all</button>
+        </div>
+        <div id="comingUpWrap"></div>
+      </section>
+
+      <section class="section" id="healthSection"></section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2 class="section-title">Quick notes</h2>
+          <button class="section-link" id="qaAddNote2">Add</button>
+        </div>
+        <div class="card" id="notesWrap"></div>
+      </section>
+    </main>
+
+    <!-- SPECIAL DATES SCREEN -->
+    <main class="screen hide" id="screen-dates">
+      <div class="section-head">
+        <h2 class="section-title">Special dates</h2>
+        <button class="btn btn-coral btn-sm" id="addDateBtn2"><i class="fa-solid fa-plus"></i> Add</button>
+      </div>
+      <div id="allDatesWrap"></div>
+    </main>
+
+    <!-- PERIOD TRACKER SCREEN -->
+    <main class="screen hide" id="screen-period">
+      <div class="section-head">
+        <h2 class="section-title">Period Tracker</h2>
+      </div>
+      <div class="disclaimer-box" style="margin-bottom:14px;">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>This is a personal relationship-support tool based on dates you enter. It gives estimates only and is <strong>not medical advice</strong>. Nothing here is shared or sent anywhere — it stays on this device.</span>
+      </div>
+      <div id="ptStatusWrap"></div>
+
+      <section class="section">
+        <div class="section-head"><h2 class="section-title">This week</h2></div>
+        <div class="card" id="ptWeekWrap"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><h2 class="section-title">Monthly overview</h2></div>
+        <div class="card"><div class="stat-pair" id="ptMonthWrap"></div></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2 class="section-title">Cycle history</h2>
+          <button class="section-link" id="addCycleBtn">Log date</button>
+        </div>
+        <div class="card" id="cycleHistoryWrap"></div>
+      </section>
+    </main>
+
+    <!-- PROFILE SCREEN -->
+    <main class="screen hide" id="screen-profile">
+      <div class="profile-head">
+        <div class="profile-avatar" id="profileAvatar">R</div>
+        <h2 id="profileName">Your Name</h2>
+        <div class="couple-sub" id="profileCoupleSub">Add your partner's name in settings</div>
+        <div class="beta-badge"><i class="fa-solid fa-flask"></i> RishtaOS Beta 1.0</div>
+      </div>
+
+      <section class="section">
+        <div class="section-head"><h2 class="section-title">Account</h2></div>
+        <div class="card" style="padding:4px 18px;">
+          <button class="list-row" id="editProfileBtn">
+            <div class="lr-icon" style="background:var(--teal-soft);color:var(--teal-dark);"><i class="fa-solid fa-id-card"></i></div>
+            <div class="lr-text"><div class="lr-title">Edit profile</div><div class="lr-sub">Name, partner, birthday</div></div>
+            <i class="fa-solid fa-chevron-right lr-chev"></i>
+          </button>
+          <button class="list-row" id="editStartDateBtn">
+            <div class="lr-icon" style="background:var(--coral-soft);color:#C2574A;"><i class="fa-solid fa-heart"></i></div>
+            <div class="lr-text"><div class="lr-title">Relationship start date</div><div class="lr-sub" id="startDateSub">Not set</div></div>
+            <i class="fa-solid fa-chevron-right lr-chev"></i>
+          </button>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><h2 class="section-title">Preferences</h2></div>
+        <div class="card">
+          <div class="switch-row">
+            <div class="switch-row-text"><div class="st-title">Reminders</div><div class="st-sub">Browser notifications for upcoming dates</div></div>
+            <label class="switch"><input type="checkbox" id="remindersToggle"><span class="switch-track"></span></label>
+          </div>
+          <div class="switch-row">
+            <div class="switch-row-text"><div class="st-title">Dark mode</div><div class="st-sub">Easier on the eyes at night</div></div>
+            <label class="switch"><input type="checkbox" id="darkModeToggle"><span class="switch-track"></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><h2 class="section-title">App</h2></div>
+        <div class="card" style="padding:4px 18px;">
+          <button class="list-row" id="installProfileBtn">
+            <div class="lr-icon" style="background:var(--saffron-soft);color:#AD7418;"><i class="fa-solid fa-download"></i></div>
+            <div class="lr-text"><div class="lr-title">Install app</div><div class="lr-sub" id="installStatusText">Checking availability…</div></div>
+            <i class="fa-solid fa-chevron-right lr-chev"></i>
+          </button>
+          <button class="list-row" id="exportDataBtn">
+            <div class="lr-icon" style="background:var(--teal-soft);color:var(--teal-dark);"><i class="fa-solid fa-file-export"></i></div>
+            <div class="lr-text"><div class="lr-title">Export my data</div><div class="lr-sub">Download a local backup (.json)</div></div>
+            <i class="fa-solid fa-chevron-right lr-chev"></i>
+          </button>
+          <button class="list-row" id="aboutBtn">
+            <div class="lr-icon" style="background:var(--navy);color:var(--cream);"><i class="fa-solid fa-circle-info"></i></div>
+            <div class="lr-text"><div class="lr-title">About RishtaOS</div><div class="lr-sub">What this app is & isn't</div></div>
+            <i class="fa-solid fa-chevron-right lr-chev"></i>
+          </button>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><h2 class="section-title">Danger zone</h2></div>
+        <div class="card" style="padding:4px 18px;">
+          <button class="list-row" id="resetDataBtn">
+            <div class="lr-icon" style="background:var(--coral-soft);color:#C2574A;"><i class="fa-solid fa-trash-can"></i></div>
+            <div class="lr-text"><div class="lr-title" style="color:#C2574A;">Reset all data</div><div class="lr-sub">Erase everything stored on this device</div></div>
+            <i class="fa-solid fa-chevron-right lr-chev"></i>
+          </button>
+        </div>
+      </section>
+
+      <p style="text-align:center;font-size:0.72rem;color:var(--ink-faint);margin-top:22px;">
+        RishtaOS Beta 1.0 · Everything stays on your device.<br>Built for guys trying to be a little more prepared.
+      </p>
+    </main>
+  </div>
+</div>
+
+<!-- Bottom nav (mobile) -->
+<nav class="bottom-nav hide" id="bottomNav">
+  <button class="nav-item" data-screen="period"><i class="fa-solid fa-calendar-days"></i><span>Period</span></button>
+  <button class="nav-item nav-home active" data-screen="home"><div class="nav-home-circle"><i class="fa-solid fa-house"></i></div></button>
+  <button class="nav-item" data-screen="profile"><i class="fa-solid fa-user"></i><span>Profile</span></button>
+</nav>
+
+<button class="fab hide" id="fabAdd" aria-label="Quick add"><i class="fa-solid fa-plus"></i></button>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<!-- ===== SHEETS ===== -->
+
+<div class="sheet-overlay" id="sheetStartDate">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Relationship start</h3><button class="sheet-close" data-close="sheetStartDate"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="field">
+      <label for="startDateInput">Date</label>
+      <input type="date" id="startDateInput">
+    </div>
+    <div class="field">
+      <label for="startTimeInput">Time (optional)</label>
+      <input type="time" id="startTimeInput">
+      <div class="field-hint">Know the exact moment? Flex it. Otherwise leave blank.</div>
+    </div>
+    <button class="btn btn-primary" id="saveStartDateBtn">Save start date</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheetAddDate">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3 id="addDateHeading">Add special date</h3><button class="sheet-close" data-close="sheetAddDate"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="field">
+      <label for="sdTitle">Title</label>
+      <input type="text" id="sdTitle" placeholder="Anniversary, her birthday, etc.">
+      <div class="field-error">Give it a title, bro.</div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="sdDate">Date</label>
+        <input type="date" id="sdDate">
+        <div class="field-error">Pick a date.</div>
+      </div>
+      <div class="field">
+        <label for="sdTime">Time (optional)</label>
+        <input type="time" id="sdTime">
+      </div>
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <div class="chip-select" id="sdCategoryChips">
+        <button class="chip-opt" data-cat="anniversary"><i class="fa-solid fa-heart"></i> Anniversary</button>
+        <button class="chip-opt" data-cat="birthday"><i class="fa-solid fa-cake-candles"></i> Birthday</button>
+        <button class="chip-opt" data-cat="date"><i class="fa-solid fa-utensils"></i> Date Plan</button>
+        <button class="chip-opt" data-cat="festival"><i class="fa-solid fa-star"></i> Festival</button>
+        <button class="chip-opt" data-cat="other"><i class="fa-solid fa-calendar"></i> Other</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="sdNote">Note (optional)</label>
+      <textarea id="sdNote" placeholder="Her favourite restaurant, gift idea, anything worth remembering…"></textarea>
+    </div>
+    <div class="field">
+      <label>Remind me</label>
+      <div class="chip-select" id="sdReminderChips">
+        <button class="chip-opt" data-rem="none">No reminder</button>
+        <button class="chip-opt" data-rem="1day">1 day before</button>
+        <button class="chip-opt" data-rem="3day">3 days before</button>
+        <button class="chip-opt" data-rem="1week">1 week before</button>
+      </div>
+    </div>
+    <button class="btn btn-coral" id="saveDateBtn">Save date</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheetAddNote">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Quick note</h3><button class="sheet-close" data-close="sheetAddNote"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="field">
+      <label for="noteText">What do you want to remember?</label>
+      <textarea id="noteText" placeholder="She mentioned wanting to try that new cafe…" rows="4"></textarea>
+      <div class="field-error">Write something first.</div>
+    </div>
+    <button class="btn btn-saffron" id="saveNoteBtn">Save note</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheetEditProfile">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Edit profile</h3><button class="sheet-close" data-close="sheetEditProfile"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="field">
+      <label for="profNameInput">Your name</label>
+      <input type="text" id="profNameInput" placeholder="Rahul">
+      <div class="field-error">We need a name to greet you properly.</div>
+    </div>
+    <div class="field">
+      <label for="profPartnerInput">Partner's name</label>
+      <input type="text" id="profPartnerInput" placeholder="Optional">
+    </div>
+    <div class="field">
+      <label for="profBirthdayInput">Her birthday (optional)</label>
+      <input type="date" id="profBirthdayInput">
+      <div class="field-hint">We'll auto-add this as a special date.</div>
+    </div>
+    <button class="btn btn-primary" id="saveProfileBtn">Save profile</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheetAddCycle">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Log cycle start</h3><button class="sheet-close" data-close="sheetAddCycle"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="field">
+      <label for="cycleDateInput">Start date</label>
+      <input type="date" id="cycleDateInput">
+      <div class="field-error">Pick a date to log.</div>
+    </div>
+    <div class="field-hint" style="margin-bottom:16px;">Logging a couple of cycles helps RishtaOS estimate the next window more accurately.</div>
+    <button class="btn btn-teal btn-primary" id="saveCycleBtn">Save entry</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheetAbout">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>About RishtaOS</h3><button class="sheet-close" data-close="sheetAbout"><i class="fa-solid fa-xmark"></i></button></div>
+    <p style="font-size:0.88rem;line-height:1.65;color:var(--ink-muted);margin-bottom:14px;">
+      RishtaOS is a private relationship companion built for one job: helping you remember the stuff that actually matters — anniversaries, her birthday, the little things she mentioned once in passing.
+    </p>
+    <p style="font-size:0.88rem;line-height:1.65;color:var(--ink-muted);margin-bottom:14px;">
+      It's not therapy, it's not a matchmaking app, and it definitely doesn't diagnose your relationship. Think of it as organisation with a bit of heart — an operating system for remembering the relationship stuff you really should remember.
+    </p>
+    <div class="disclaimer-box" style="margin-bottom:6px;">
+      <i class="fa-solid fa-lock"></i>
+      <span><strong>Beta 1.0 · 100% local.</strong> Everything you enter is stored only on this device using your browser's local storage. Nothing is uploaded, synced, or sent to any server.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="cb-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmMsg">This action cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" id="confirmCancel">Cancel</button>
+      <button class="btn btn-danger" id="confirmOk">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="./js/app.js"></script>
+</body>
+</html>
