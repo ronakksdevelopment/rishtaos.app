@@ -474,7 +474,7 @@ function renderAllDates() {
   if (items.length === 0) {
     wrap.innerHTML = `
       <div class="card empty-state">
-        <div class="es-icon"><i class="fa-solid fa-calendar-heart"></i></div>
+        <div class="es-icon"><i class="fa-solid fa-calendar-check"></i></div>
         <h4>No special dates yet</h4>
         <p>Birthdays, anniversaries, date plans, add the ones worth remembering.</p>
         <button class="btn btn-coral" id="emptyAddDateBtn2" style="width:auto;padding:11px 20px;">Add a date</button>
