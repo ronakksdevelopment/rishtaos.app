@@ -79,17 +79,32 @@ function uid() {
 // ---------------------------------------------------------------------------
 // Toasts
 // ---------------------------------------------------------------------------
+const MAX_VISIBLE_TOASTS = 2;
+
 function showToast(msg, type = 'success') {
   const stack = document.getElementById('toastStack');
+
+  // Avoid piling up duplicate/near-duplicate toasts (e.g. double-taps) and cap visible count.
+  const existing = Array.from(stack.children);
+  if (existing.some(t => t.dataset.msg === msg && !t.classList.contains('leaving'))) return;
+  while (stack.children.length >= MAX_VISIBLE_TOASTS) {
+    dismissToast(stack.firstElementChild);
+  }
+
   const el = document.createElement('div');
   el.className = `toast ${type === 'error' ? 'toast-error' : ''}`;
+  el.dataset.msg = msg;
   const icon = type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
   el.innerHTML = `<i class="fa-solid ${icon}"></i><span>${escapeHtml(msg)}</span>`;
   stack.appendChild(el);
-  setTimeout(() => {
-    el.classList.add('leaving');
-    setTimeout(() => el.remove(), 200);
-  }, 2800);
+  el._timer = setTimeout(() => dismissToast(el), 2800);
+}
+
+function dismissToast(el) {
+  if (!el || el.classList.contains('leaving')) return;
+  clearTimeout(el._timer);
+  el.classList.add('leaving');
+  setTimeout(() => el.remove(), 200);
 }
 
 function escapeHtml(str) {
@@ -148,6 +163,16 @@ function switchScreen(name) {
   window.scrollTo(0, 0);
   currentScreen = name;
   renderCurrentScreen();
+  updateFabVisibility();
+}
+
+// FAB is only relevant on screens where "quick add a date" makes sense front-and-center.
+// On Period/Profile it has no job to do and only covers content, so hide it there.
+function updateFabVisibility() {
+  const fab = document.getElementById('fabAdd');
+  if (!fab) return;
+  const showOn = ['home', 'dates'];
+  fab.classList.toggle('fab-hidden', !showOn.includes(currentScreen));
 }
 let currentScreen = 'home';
 
@@ -630,16 +655,36 @@ function renderPeriod() {
   const dayInCycle = Math.floor((now - lastStart) / 86400000) + 1;
   const daysToNext = Math.ceil((nextEstimate - now) / 86400000);
 
-  let phase = 'Estimated: Mid-cycle';
-  if (dayInCycle <= 5) phase = 'Estimated: Period window';
-  else if (dayInCycle >= avgLen - 3) phase = 'Estimated: Period approaching';
+  // Single source of truth for cycle phase — everything below (headline, progress bar,
+  // and the "This week" copy) derives from this one value so the messaging can never
+  // contradict itself across cards.
+  const IN_WINDOW_DAYS = 5;      // typical bleed-window length used for the estimate
+  const APPROACHING_DAYS = 3;    // "heads up" window before the next estimated start
+
+  let phase, phaseLabel, headline, weekCopy;
+  if (dayInCycle <= IN_WINDOW_DAYS) {
+    phase = 'in-window';
+    phaseLabel = 'Estimated: Period window';
+    headline = `Day ${dayInCycle} of the estimated window`;
+    weekCopy = "Likely in the estimated period window this week. A little extra patience and comfort go a long way. 🧡";
+  } else if (daysToNext <= APPROACHING_DAYS) {
+    phase = 'approaching';
+    phaseLabel = 'Estimated: Period approaching';
+    headline = daysToNext > 0 ? `Next window in ~${daysToNext} day${daysToNext === 1 ? '' : 's'}` : 'Expected window now';
+    weekCopy = "Getting closer to the estimated window — might be worth keeping her favourite snack handy.";
+  } else {
+    phase = 'mid-cycle';
+    phaseLabel = 'Estimated: Mid-cycle';
+    headline = `Next window in ~${daysToNext} days`;
+    weekCopy = "No major changes expected this week based on current estimates.";
+  }
 
   const progressPct = Math.min(100, Math.max(0, Math.round((dayInCycle / avgLen) * 100)));
 
   statusWrap.innerHTML = `
     <div class="pt-status-card">
-      <div class="pt-phase">${phase}</div>
-      <div class="pt-big">${daysToNext > 0 ? `Next window in ~${daysToNext} days` : 'Expected window now'}</div>
+      <div class="pt-phase">${phaseLabel}</div>
+      <div class="pt-big">${headline}</div>
       <div class="pt-progress-track"><div class="pt-progress-fill" style="width:${progressPct}%;"></div></div>
       <div class="pt-meta-row">
         <span>Day ${dayInCycle} of ~${avgLen}</span>
@@ -651,14 +696,7 @@ function renderPeriod() {
     </div>`;
   document.getElementById('addCycleBtn2').addEventListener('click', openAddCycleSheet);
 
-  weekWrap.innerHTML = `
-    <p style="font-size:0.84rem;line-height:1.6;color:var(--ink-muted);">
-      ${phase.includes('window') && dayInCycle <= 5
-        ? "Estimated period window this week. A little extra patience and comfort go a long way. 🧡"
-        : phase.includes('approaching')
-          ? "Getting closer to the estimated window — might be worth keeping chocolate or her favourite snack handy."
-          : "No major changes expected this week based on current estimates."}
-    </p>`;
+  weekWrap.innerHTML = `<p style="font-size:0.84rem;line-height:1.6;color:var(--ink-muted);">${weekCopy}</p>`;
 
   monthWrap.innerHTML = `
     <div class="stat-box"><div class="sb-num">${avgLen}</div><div class="sb-lbl">Avg cycle (days)</div></div>
@@ -931,6 +969,7 @@ function completeOnboarding() {
   document.getElementById('bottomNav').classList.remove('hide');
   document.getElementById('fabAdd').classList.remove('hide');
   renderHome();
+  updateFabVisibility();
 }
 
 // ---------------------------------------------------------------------------
@@ -950,6 +989,7 @@ function boot() {
       document.getElementById('bottomNav').classList.remove('hide');
       document.getElementById('fabAdd').classList.remove('hide');
       renderHome();
+      updateFabVisibility();
     }
   }, 900);
 
