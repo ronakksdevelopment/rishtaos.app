@@ -9,6 +9,10 @@ const APP_SHELL = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
+  './assets/onboard-uptime.jpg',
+  './assets/onboard-special-dates.jpg',
+  './assets/onboard-support-mode.jpg',
+  './assets/banner-hero.jpg',
 ];
 
 self.addEventListener('install', (event) => {

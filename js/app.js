@@ -1,5 +1,5 @@
 /* ==========================================================================
-   RishtaOS — app.js
+   RishtaOS · app.js
    Frontend-only. All state persisted to localStorage.
    ========================================================================== */
 
@@ -68,7 +68,7 @@ function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (e) {
     console.error('RishtaOS: failed to save state', e);
-    showToast('Could not save — storage might be full.', 'error');
+    showToast('Could not save, storage might be full.', 'error');
   }
 }
 
@@ -398,7 +398,7 @@ function renderComingUp() {
       <div class="card empty-state" style="padding:28px 16px;">
         <div class="es-icon"><i class="fa-solid fa-calendar-plus"></i></div>
         <h4>Nothing on the radar yet</h4>
-        <p>Add her birthday, your anniversary, or an upcoming date plan — we'll keep count.</p>
+        <p>Add her birthday, your anniversary, or an upcoming date plan, we'll keep count.</p>
         <button class="btn btn-coral" id="emptyAddDateBtn" style="width:auto;padding:11px 20px;">Add a date</button>
       </div>`;
     const btn = document.getElementById('emptyAddDateBtn');
@@ -422,7 +422,7 @@ function renderHealth() {
         <div class="health-track"><div class="health-fill" style="width:${pct}%;"></div></div>
         <span style="font-size:0.78rem;font-weight:700;color:var(--teal-dark);">Running smooth</span>
       </div>
-      <div class="health-note"><i class="fa-solid fa-circle-info"></i>&nbsp; Just a fun way to track your own consistency — not an assessment of your relationship.</div>
+      <div class="health-note"><i class="fa-solid fa-circle-info"></i>&nbsp; Just a fun way to track your own consistency, not an assessment of your relationship.</div>
     </div>`;
 }
 
@@ -433,7 +433,7 @@ function renderNotes() {
       <div class="empty-state" style="padding:14px 10px;">
         <div class="es-icon" style="width:48px;height:48px;font-size:1.1rem;"><i class="fa-solid fa-note-sticky"></i></div>
         <h4 style="font-size:0.88rem;">No notes yet</h4>
-        <p style="font-size:0.78rem;">Jot down things she mentions — favourite food, a hint, anything.</p>
+        <p style="font-size:0.78rem;">Jot down things she mentions, favourite food, a hint, anything.</p>
       </div>`;
     return;
   }
@@ -476,7 +476,7 @@ function renderAllDates() {
       <div class="card empty-state">
         <div class="es-icon"><i class="fa-solid fa-calendar-heart"></i></div>
         <h4>No special dates yet</h4>
-        <p>Birthdays, anniversaries, date plans — add the ones worth remembering.</p>
+        <p>Birthdays, anniversaries, date plans, add the ones worth remembering.</p>
         <button class="btn btn-coral" id="emptyAddDateBtn2" style="width:auto;padding:11px 20px;">Add a date</button>
       </div>`;
     document.getElementById('emptyAddDateBtn2').addEventListener('click', () => openAddDateSheet());
@@ -643,7 +643,7 @@ function renderPeriod() {
       </div>`;
     document.getElementById('emptyAddCycleBtn').addEventListener('click', openAddCycleSheet);
     weekWrap.innerHTML = `<p style="font-size:0.82rem;color:var(--ink-faint);">Nothing to show yet.</p>`;
-    monthWrap.innerHTML = `<div class="stat-box"><div class="sb-num">—</div><div class="sb-lbl">Avg cycle</div></div><div class="stat-box"><div class="sb-num">${cycles.length}</div><div class="sb-lbl">Logged entries</div></div>`;
+    monthWrap.innerHTML = `<div class="stat-box"><div class="sb-num">--</div><div class="sb-lbl">Avg cycle</div></div><div class="stat-box"><div class="sb-num">${cycles.length}</div><div class="sb-lbl">Logged entries</div></div>`;
     historyWrap.innerHTML = `<p style="font-size:0.82rem;color:var(--ink-faint);">No history logged.</p>`;
     return;
   }
@@ -671,7 +671,7 @@ function renderPeriod() {
     phase = 'approaching';
     phaseLabel = 'Estimated: Period approaching';
     headline = daysToNext > 0 ? `Next window in ~${daysToNext} day${daysToNext === 1 ? '' : 's'}` : 'Expected window now';
-    weekCopy = "Getting closer to the estimated window — might be worth keeping her favourite snack handy.";
+    weekCopy = "Getting closer to the estimated window, might be worth keeping her favourite snack handy.";
   } else {
     phase = 'mid-cycle';
     phaseLabel = 'Estimated: Mid-cycle';
@@ -904,7 +904,7 @@ function updateInstallStatusUI() {
   if (isInstalled) {
     statusText.textContent = 'Already installed ✓';
   } else if (deferredPrompt) {
-    statusText.textContent = 'Available — tap to install';
+    statusText.textContent = 'Available, tap to install';
   } else {
     statusText.textContent = 'Use your browser menu → "Add to Home Screen"';
   }

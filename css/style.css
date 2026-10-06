@@ -724,8 +724,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   margin-bottom: 28px; box-shadow: var(--shadow-lg);
   display: flex; align-items: center; justify-content: center;
   position: relative; overflow: hidden;
+  background: var(--brand-navy);
 }
-.ob-illustration .ob-icon-big { font-size: 4rem; color: var(--brand-cream); position: relative; z-index: 1; }
+.ob-illustration img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ob-slide h2 { font-size: 1.3rem; margin-bottom: 10px; }
 .ob-slide p { font-size: 0.9rem; color: var(--ink-muted); line-height: 1.55; max-width: 300px; }
 .ob-dots { display: flex; gap: 7px; justify-content: center; margin: 18px 0; }
@@ -788,6 +789,16 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   padding: 8px 14px; border-radius: var(--radius-pill); font-size: 0.78rem; font-weight: 700;
   flex-shrink: 0;
 }
+
+/* ==========================================================================
+   About sheet banner
+   ========================================================================== */
+.about-banner {
+  width: 100%; border-radius: var(--radius); overflow: hidden;
+  margin-bottom: 16px; box-shadow: var(--shadow);
+  background: var(--brand-navy);
+}
+.about-banner img { width: 100%; height: auto; display: block; }
 
 /* ==========================================================================
    Loading skeleton
