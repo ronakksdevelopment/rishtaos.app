@@ -1,5 +1,5 @@
 // RishtaOS service worker — offline-friendly app shell caching.
-const CACHE_NAME = 'rishtaos-cache-v1';
+const CACHE_NAME = 'rishtaos-cache-v2';
 const APP_SHELL = [
   './',
   './index.html',

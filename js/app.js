@@ -24,11 +24,11 @@ const DEFAULT_STATE = {
 };
 
 const CATEGORY_META = {
-  anniversary: { icon: 'fa-heart', label: 'Anniversary', bg: 'var(--coral-soft)', color: '#C2574A' },
-  birthday: { icon: 'fa-cake-candles', label: 'Birthday', bg: 'var(--saffron-soft)', color: '#AD7418' },
-  date: { icon: 'fa-utensils', label: 'Date Plan', bg: 'var(--teal-soft)', color: 'var(--teal-dark)' },
-  festival: { icon: 'fa-star', label: 'Festival', bg: 'var(--saffron-soft)', color: '#AD7418' },
-  other: { icon: 'fa-calendar', label: 'Other', bg: 'var(--cream-dim)', color: 'var(--ink-muted)' },
+  anniversary: { icon: 'fa-heart', label: 'Anniversary', bg: 'var(--brand-soft)', color: 'var(--brand)' },
+  birthday: { icon: 'fa-cake-candles', label: 'Birthday', bg: 'var(--primary-dim)', color: 'var(--primary-ink)' },
+  date: { icon: 'fa-utensils', label: 'Date Plan', bg: 'var(--accent-info-soft)', color: 'var(--accent-info)' },
+  festival: { icon: 'fa-star', label: 'Festival', bg: 'var(--primary-dim)', color: 'var(--primary-ink)' },
+  other: { icon: 'fa-calendar', label: 'Other', bg: 'var(--surface-sunken)', color: 'var(--ink-muted)' },
 };
 
 const MICROCOPY = {
@@ -38,9 +38,9 @@ const MICROCOPY = {
     "Calendar ne yaad rakha. Tum bhi rakhna.",
     "Boss, system's running smooth.",
   ],
-  todayStatus: "Today 🎉",
+  todayStatus: "Today",
   tomorrowStatus: "Tomorrow",
-  pastStatus: "Already survived this one 😄",
+  pastStatus: "Already survived this one",
 };
 
 // ---------------------------------------------------------------------------
@@ -269,7 +269,7 @@ function renderGreeting() {
   if (hour < 12) g = 'Good morning';
   else if (hour < 17) g = 'Good afternoon';
   const name = state.profile.name || 'there';
-  document.getElementById('greetingText').innerHTML = `${g}, ${escapeHtml(name)} <span class="wave">👋</span>`;
+  document.getElementById('greetingText').textContent = `${g}, ${name}`;
   const subs = [
     "Support mode: ON.",
     "No more 'date kya thi?' moments.",
@@ -285,7 +285,7 @@ function renderHero() {
   if (!start) {
     wrap.innerHTML = `
       <div class="hero-uptime">
-        <div class="hero-eyebrow"><span class="pulse-dot"></span> RELATIONSHIP UPTIME</div>
+        <div class="hero-eyebrow"><i class="fa-solid fa-heart-pulse"></i> RELATIONSHIP UPTIME</div>
         <div class="no-start-date">
           <div class="big-icon"><i class="fa-solid fa-heart-circle-plus"></i></div>
           <p>Set your relationship start date to boot up the uptime counter.</p>
@@ -305,7 +305,7 @@ function renderHero() {
 
   wrap.innerHTML = `
     <div class="hero-uptime">
-      <div class="hero-eyebrow"><span class="pulse-dot"></span> RELATIONSHIP UPTIME</div>
+      <div class="hero-eyebrow"><i class="fa-solid fa-heart-pulse"></i> RELATIONSHIP UPTIME</div>
       <div class="hero-names">${partnerLine}</div>
       <div class="uptime-grid">
         <div class="uptime-unit"><div class="num" id="upYears">${b.years}</div><div class="lbl">Years</div></div>
@@ -357,7 +357,7 @@ document.getElementById('saveStartDateBtn').addEventListener('click', () => {
   state.relationship.startTime = document.getElementById('startTimeInput').value;
   saveState();
   closeSheet('sheetStartDate');
-  showToast('Relationship uptime is live. 🎉');
+  showToast('Relationship uptime is live.');
   renderHero();
   renderProfile();
 });
@@ -395,11 +395,11 @@ function renderComingUp() {
   const upcoming = getUpcomingDates().filter(d => d.daysLeft >= 0).slice(0, 8);
   if (upcoming.length === 0) {
     wrap.innerHTML = `
-      <div class="card empty-state" style="padding:28px 16px;">
+      <div class="card empty-state empty-state-compact">
         <div class="es-icon"><i class="fa-solid fa-calendar-plus"></i></div>
         <h4>Nothing on the radar yet</h4>
         <p>Add her birthday, your anniversary, or an upcoming date plan, we'll keep count.</p>
-        <button class="btn btn-coral" id="emptyAddDateBtn" style="width:auto;padding:11px 20px;">Add a date</button>
+        <button class="btn btn-coral btn-inline" id="emptyAddDateBtn">Add a date</button>
       </div>`;
     const btn = document.getElementById('emptyAddDateBtn');
     if (btn) btn.addEventListener('click', () => openAddDateSheet());
@@ -420,9 +420,9 @@ function renderHealth() {
     <div class="card">
       <div class="health-row">
         <div class="health-track"><div class="health-fill" style="width:${pct}%;"></div></div>
-        <span style="font-size:0.78rem;font-weight:700;color:var(--teal-dark);">Running smooth</span>
+        <span class="running-smooth">Running smooth</span>
       </div>
-      <div class="health-note"><i class="fa-solid fa-circle-info"></i>&nbsp; Just a fun way to track your own consistency, not an assessment of your relationship.</div>
+      <div class="health-note"><i class="fa-solid fa-circle-info"></i><span>Just a fun way to track your own consistency, not an assessment of your relationship.</span></div>
     </div>`;
 }
 
@@ -430,10 +430,10 @@ function renderNotes() {
   const wrap = document.getElementById('notesWrap');
   if (state.notes.length === 0) {
     wrap.innerHTML = `
-      <div class="empty-state" style="padding:14px 10px;">
-        <div class="es-icon" style="width:48px;height:48px;font-size:1.1rem;"><i class="fa-solid fa-note-sticky"></i></div>
-        <h4 style="font-size:0.88rem;">No notes yet</h4>
-        <p style="font-size:0.78rem;">Jot down things she mentions, favourite food, a hint, anything.</p>
+      <div class="empty-state empty-state-inline">
+        <div class="es-icon"><i class="fa-solid fa-note-sticky"></i></div>
+        <h4>No notes yet</h4>
+        <p>Jot down things she mentions, favourite food, a hint, anything.</p>
       </div>`;
     return;
   }
@@ -442,7 +442,7 @@ function renderNotes() {
     <div class="note-item" data-id="${n.id}">
       <i class="fa-solid fa-note-sticky"></i>
       <div class="ni-text">${escapeHtml(n.text)}<div class="ni-date">${new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div></div>
-      <button class="ni-del" aria-label="Delete note"><i class="fa-solid fa-xmark"></i></button>
+      <button class="ni-del icon-btn" aria-label="Delete note"><i class="fa-solid fa-xmark"></i></button>
     </div>`).join('');
   wrap.querySelectorAll('.ni-del').forEach(btn => {
     btn.addEventListener('click', async (e) => {
@@ -477,7 +477,7 @@ function renderAllDates() {
         <div class="es-icon"><i class="fa-solid fa-calendar-check"></i></div>
         <h4>No special dates yet</h4>
         <p>Birthdays, anniversaries, date plans, add the ones worth remembering.</p>
-        <button class="btn btn-coral" id="emptyAddDateBtn2" style="width:auto;padding:11px 20px;">Add a date</button>
+        <button class="btn btn-coral btn-inline" id="emptyAddDateBtn2">Add a date</button>
       </div>`;
     document.getElementById('emptyAddDateBtn2').addEventListener('click', () => openAddDateSheet());
     return;
@@ -486,14 +486,14 @@ function renderAllDates() {
     const meta = CATEGORY_META[sd.category] || CATEGORY_META.other;
     const status = statusForDays(sd.daysLeft);
     return `
-      <div class="card" data-id="${sd.id}" style="margin-bottom:12px;display:flex;align-items:center;gap:13px;">
-        <div class="cat-icon" style="background:${meta.bg};color:${meta.color};width:44px;height:44px;flex-shrink:0;"><i class="fa-solid ${meta.icon}"></i></div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:600;font-size:0.92rem;">${escapeHtml(sd.title)}</div>
-          <div style="font-size:0.76rem;color:var(--ink-faint);margin:2px 0 6px;">${formatDateHuman(sd.date)}${sd.note ? ' · ' + escapeHtml(sd.note.slice(0, 40)) + (sd.note.length > 40 ? '…' : '') : ''}</div>
+      <div class="card date-list-row" data-id="${sd.id}">
+        <div class="cat-icon" style="background:${meta.bg};color:${meta.color};"><i class="fa-solid ${meta.icon}"></i></div>
+        <div class="dlr-body">
+          <div class="dlr-title">${escapeHtml(sd.title)}</div>
+          <div class="dlr-meta">${formatDateHuman(sd.date)}${sd.note ? ' · ' + escapeHtml(sd.note.slice(0, 40)) + (sd.note.length > 40 ? '…' : '') : ''}</div>
           <span class="status-pill ${status.cls}">${status.label}</span>
         </div>
-        <button class="chi-del" aria-label="Delete" data-del="${sd.id}" style="background:none;border:none;color:var(--ink-faint);font-size:1rem;width:34px;height:34px;flex-shrink:0;"><i class="fa-solid fa-trash-can"></i></button>
+        <button class="chi-del icon-btn" aria-label="Delete" data-del="${sd.id}"><i class="fa-solid fa-trash-can"></i></button>
       </div>`;
   }).join('');
   wrap.querySelectorAll('[data-del]').forEach(btn => {
@@ -639,12 +639,12 @@ function renderPeriod() {
         <div class="es-icon"><i class="fa-solid fa-calendar-days"></i></div>
         <h4>No cycle data yet</h4>
         <p>Log a start date to begin estimating timelines. It's private and stays on this device.</p>
-        <button class="btn btn-primary" id="emptyAddCycleBtn" style="width:auto;padding:11px 20px;">Log a date</button>
+        <button class="btn btn-primary btn-inline" id="emptyAddCycleBtn">Log a date</button>
       </div>`;
     document.getElementById('emptyAddCycleBtn').addEventListener('click', openAddCycleSheet);
-    weekWrap.innerHTML = `<p style="font-size:0.82rem;color:var(--ink-faint);">Nothing to show yet.</p>`;
+    weekWrap.innerHTML = `<p class="muted-note">Nothing to show yet.</p>`;
     monthWrap.innerHTML = `<div class="stat-box"><div class="sb-num">--</div><div class="sb-lbl">Avg cycle</div></div><div class="stat-box"><div class="sb-num">${cycles.length}</div><div class="sb-lbl">Logged entries</div></div>`;
-    historyWrap.innerHTML = `<p style="font-size:0.82rem;color:var(--ink-faint);">No history logged.</p>`;
+    historyWrap.innerHTML = `<p class="muted-note">No history logged.</p>`;
     return;
   }
 
@@ -666,7 +666,7 @@ function renderPeriod() {
     phase = 'in-window';
     phaseLabel = 'Estimated: Period window';
     headline = `Day ${dayInCycle} of the estimated window`;
-    weekCopy = "Likely in the estimated period window this week. A little extra patience and comfort go a long way. 🧡";
+    weekCopy = "Likely in the estimated period window this week. A little extra patience and comfort go a long way.";
   } else if (daysToNext <= APPROACHING_DAYS) {
     phase = 'approaching';
     phaseLabel = 'Estimated: Period approaching';
@@ -691,12 +691,12 @@ function renderPeriod() {
         <span>Est. next: ${nextEstimate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
       </div>
     </div>
-    <div style="margin-top:10px;">
+    <div class="pt-log-row">
       <button class="btn btn-ghost btn-sm" id="addCycleBtn2"><i class="fa-solid fa-plus"></i> Log new start date</button>
     </div>`;
   document.getElementById('addCycleBtn2').addEventListener('click', openAddCycleSheet);
 
-  weekWrap.innerHTML = `<p style="font-size:0.84rem;line-height:1.6;color:var(--ink-muted);">${weekCopy}</p>`;
+  weekWrap.innerHTML = `<p class="week-copy">${weekCopy}</p>`;
 
   monthWrap.innerHTML = `
     <div class="stat-box"><div class="sb-num">${avgLen}</div><div class="sb-lbl">Avg cycle (days)</div></div>
@@ -902,11 +902,11 @@ function updateInstallStatusUI() {
   const statusText = document.getElementById('installStatusText');
   if (!statusText) return;
   if (isInstalled) {
-    statusText.textContent = 'Already installed ✓';
+    statusText.textContent = 'Already installed';
   } else if (deferredPrompt) {
     statusText.textContent = 'Available, tap to install';
   } else {
-    statusText.textContent = 'Use your browser menu → "Add to Home Screen"';
+    statusText.textContent = 'Use your browser menu, then "Add to Home Screen"';
   }
 }
 

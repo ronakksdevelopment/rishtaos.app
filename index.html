@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>RishtaOS · Relationship Companion</title>
 <meta name="description" content="RishtaOS is a private relationship operating system for men: track your relationship uptime, never miss a special date, and stay a step ahead.">
-<meta name="theme-color" content="#101827">
+<meta name="theme-color" content="#741A2F">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png">
@@ -78,14 +78,14 @@
       <button class="nav-item" data-screen="dates"><i class="fa-solid fa-calendar-check"></i><span>Special Dates</span></button>
       <button class="nav-item" data-screen="profile"><i class="fa-solid fa-user"></i><span>Profile</span></button>
     </nav>
-    <div class="sidebar-foot">RishtaOS Beta 1.0 · Local-only</div>
+    <div class="sidebar-foot">RishtaOS 1.0 · Local-only</div>
   </aside>
 
   <div class="main-col">
     <!-- Topbar -->
     <div class="topbar">
       <div class="greeting-wrap">
-        <div class="greeting" id="greetingText">Hey there <span class="wave">👋</span></div>
+        <div class="greeting" id="greetingText">Hey there</div>
         <div class="subgreeting" id="subGreeting">Support mode: ON.</div>
       </div>
       <button class="topbar-icon-btn" id="notifBtn" aria-label="Reminders"><i class="fa-solid fa-bell"></i><span class="dot hide" id="notifDot"></span></button>
@@ -149,7 +149,7 @@
       <div class="section-head">
         <h2 class="section-title">Period Tracker</h2>
       </div>
-      <div class="disclaimer-box" style="margin-bottom:14px;">
+      <div class="disclaimer-box u-mb-md">
         <i class="fa-solid fa-circle-info"></i>
         <span>This is a personal relationship-support tool based on dates you enter. It gives estimates only and is <strong>not medical advice</strong>. Nothing here is shared or sent anywhere, it stays on this device.</span>
       </div>
@@ -180,19 +180,19 @@
         <div class="profile-avatar" id="profileAvatar">R</div>
         <h2 id="profileName">Your Name</h2>
         <div class="couple-sub" id="profileCoupleSub">Add your partner's name in settings</div>
-        <div class="beta-badge"><i class="fa-solid fa-flask"></i> RishtaOS Beta 1.0</div>
+        <div class="release-badge"><i class="fa-solid fa-shield-heart"></i> RishtaOS 1.0</div>
       </div>
 
       <section class="section">
         <div class="section-head"><h2 class="section-title">Account</h2></div>
-        <div class="card" style="padding:4px 18px;">
+        <div class="card card-flush">
           <button class="list-row" id="editProfileBtn">
-            <div class="lr-icon" style="background:var(--teal-soft);color:var(--teal-dark);"><i class="fa-solid fa-id-card"></i></div>
+            <div class="lr-icon ico-teal"><i class="fa-solid fa-id-card"></i></div>
             <div class="lr-text"><div class="lr-title">Edit profile</div><div class="lr-sub">Name, partner, birthday</div></div>
             <i class="fa-solid fa-chevron-right lr-chev"></i>
           </button>
           <button class="list-row" id="editStartDateBtn">
-            <div class="lr-icon" style="background:var(--coral-soft);color:#C2574A;"><i class="fa-solid fa-heart"></i></div>
+            <div class="lr-icon ico-coral"><i class="fa-solid fa-heart"></i></div>
             <div class="lr-text"><div class="lr-title">Relationship start date</div><div class="lr-sub" id="startDateSub">Not set</div></div>
             <i class="fa-solid fa-chevron-right lr-chev"></i>
           </button>
@@ -215,19 +215,19 @@
 
       <section class="section">
         <div class="section-head"><h2 class="section-title">App</h2></div>
-        <div class="card" style="padding:4px 18px;">
+        <div class="card card-flush">
           <button class="list-row" id="installProfileBtn">
-            <div class="lr-icon" style="background:var(--saffron-soft);color:#AD7418;"><i class="fa-solid fa-download"></i></div>
+            <div class="lr-icon ico-saffron"><i class="fa-solid fa-download"></i></div>
             <div class="lr-text"><div class="lr-title">Install app</div><div class="lr-sub" id="installStatusText">Checking availability…</div></div>
             <i class="fa-solid fa-chevron-right lr-chev"></i>
           </button>
           <button class="list-row" id="exportDataBtn">
-            <div class="lr-icon" style="background:var(--teal-soft);color:var(--teal-dark);"><i class="fa-solid fa-file-export"></i></div>
+            <div class="lr-icon ico-teal"><i class="fa-solid fa-file-export"></i></div>
             <div class="lr-text"><div class="lr-title">Export my data</div><div class="lr-sub">Download a local backup (.json)</div></div>
             <i class="fa-solid fa-chevron-right lr-chev"></i>
           </button>
           <button class="list-row" id="aboutBtn">
-            <div class="lr-icon" style="background:var(--navy);color:var(--cream);"><i class="fa-solid fa-circle-info"></i></div>
+            <div class="lr-icon ico-navy"><i class="fa-solid fa-circle-info"></i></div>
             <div class="lr-text"><div class="lr-title">About RishtaOS</div><div class="lr-sub">What this app is & isn't</div></div>
             <i class="fa-solid fa-chevron-right lr-chev"></i>
           </button>
@@ -236,17 +236,17 @@
 
       <section class="section">
         <div class="section-head"><h2 class="section-title">Danger zone</h2></div>
-        <div class="card" style="padding:4px 18px;">
+        <div class="card card-flush">
           <button class="list-row" id="resetDataBtn">
-            <div class="lr-icon" style="background:var(--coral-soft);color:#C2574A;"><i class="fa-solid fa-trash-can"></i></div>
-            <div class="lr-text"><div class="lr-title" style="color:#C2574A;">Reset all data</div><div class="lr-sub">Erase everything stored on this device</div></div>
+            <div class="lr-icon ico-coral"><i class="fa-solid fa-trash-can"></i></div>
+            <div class="lr-text"><div class="lr-title danger">Reset all data</div><div class="lr-sub">Erase everything stored on this device</div></div>
             <i class="fa-solid fa-chevron-right lr-chev"></i>
           </button>
         </div>
       </section>
 
-      <p style="text-align:center;font-size:0.72rem;color:var(--ink-faint);margin-top:22px;">
-        RishtaOS Beta 1.0 · Everything stays on your device.<br>Built for guys trying to be a little more prepared.
+      <p class="footnote">
+        RishtaOS 1.0 · Everything stays on your device.<br>Built to help you be a little more prepared.
       </p>
     </main>
   </div>
@@ -373,7 +373,7 @@
       <input type="date" id="cycleDateInput">
       <div class="field-error">Pick a date to log.</div>
     </div>
-    <div class="field-hint" style="margin-bottom:16px;">Logging a couple of cycles helps RishtaOS estimate the next window more accurately.</div>
+    <div class="field-hint u-mb-lg">Logging a couple of cycles helps RishtaOS estimate the next window more accurately.</div>
     <button class="btn btn-teal btn-primary" id="saveCycleBtn">Save entry</button>
   </div>
 </div>
@@ -383,15 +383,15 @@
     <div class="sheet-handle"></div>
     <div class="sheet-head"><h3>About RishtaOS</h3><button class="sheet-close" data-close="sheetAbout"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="about-banner"><img src="./assets/banner-hero.jpg" alt="RishtaOS relationship planner banner" loading="lazy"></div>
-    <p style="font-size:0.88rem;line-height:1.65;color:var(--ink-muted);margin-bottom:14px;">
+    <p class="about-text">
       RishtaOS is a private relationship companion built for one job: helping you remember the stuff that actually matters, anniversaries, her birthday, the little things she mentioned once in passing.
     </p>
-    <p style="font-size:0.88rem;line-height:1.65;color:var(--ink-muted);margin-bottom:14px;">
+    <p class="about-text">
       It's not therapy, it's not a matchmaking app, and it definitely doesn't diagnose your relationship. Think of it as organisation with a bit of heart: an operating system for remembering the relationship stuff you really should remember.
     </p>
-    <div class="disclaimer-box" style="margin-bottom:6px;">
+    <div class="disclaimer-box u-mb-sm">
       <i class="fa-solid fa-lock"></i>
-      <span><strong>Beta 1.0 · 100% local.</strong> Everything you enter is stored only on this device using your browser's local storage. Nothing is uploaded, synced, or sent to any server.</span>
+      <span><strong>100% local.</strong> Everything you enter is stored only on this device using your browser's local storage. Nothing is uploaded, synced, or sent to any server.</span>
     </div>
   </div>
 </div>

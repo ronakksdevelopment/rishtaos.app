@@ -1,4 +1,4 @@
-# RishtaOS · Beta 1.0
+# RishtaOS · 1.0
 
 A private, frontend-only relationship companion PWA. No backend, no login, no server. Everything is stored locally in your browser.
 
@@ -37,7 +37,7 @@ rishtaos/
 ## Data & privacy
 All data (profile, dates, notes, cycle logs) lives in `localStorage` on the device only. Nothing is sent to a server. Use **Profile → Export my data** for a local JSON backup, and **Profile → Reset all data** to wipe everything.
 
-## Notes for beta 1.0
+## Notes for 1.0
 - No backend/auth: single local profile per browser/device.
 - Browser notifications require explicit permission and aren't guaranteed on all platforms; the app degrades gracefully when unsupported.
 - Period tracker provides estimates only, clearly labeled, with an in-app disclaimer. It is not a medical tool.
