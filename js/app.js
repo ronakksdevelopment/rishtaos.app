@@ -809,8 +809,28 @@ document.getElementById('darkModeToggle').addEventListener('change', (e) => {
 });
 
 function applyTheme() {
-  document.documentElement.setAttribute('data-theme', state.profile.darkMode ? 'dark' : 'light');
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', state.profile.darkMode ? '#101827' : '#101827');
+  const isDark = !!state.profile.darkMode;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', '#571F09');
+  renderBgPattern(isDark);
+}
+
+// ---------------------------------------------------------------------------
+// Decorative background pattern
+// Light mode: repeated fa-flower icons in brown, low opacity.
+// Dark mode:  repeated fa-gear icons in cream, low opacity.
+// Purely decorative, sits behind all content (aria-hidden, pointer-events:none).
+// ---------------------------------------------------------------------------
+function renderBgPattern(isDark) {
+  const wrap = document.getElementById('bgPattern');
+  if (!wrap) return;
+  const iconClass = isDark ? 'fa-gear' : 'fa-flower';
+  const COUNT = 90;
+  let html = '';
+  for (let i = 0; i < COUNT; i++) {
+    html += `<i class="fa-solid ${iconClass}"></i>`;
+  }
+  wrap.innerHTML = html;
 }
 
 // About
@@ -828,6 +848,145 @@ document.getElementById('exportDataBtn').addEventListener('click', () => {
   a.remove();
   URL.revokeObjectURL(url);
   showToast('Backup downloaded.');
+});
+
+// ---------------------------------------------------------------------------
+// Import
+// ---------------------------------------------------------------------------
+let pendingImportData = null;
+let pendingImportFileName = '';
+
+function isValidRishtaBackup(obj) {
+  if (!obj || typeof obj !== 'object') return false;
+  if (!obj.profile || typeof obj.profile !== 'object') return false;
+  if (!obj.relationship || typeof obj.relationship !== 'object') return false;
+  if (!Array.isArray(obj.specialDates)) return false;
+  if (!Array.isArray(obj.notes)) return false;
+  if (!Array.isArray(obj.cycles)) return false;
+  return true;
+}
+
+function resetImportSheetUI() {
+  pendingImportData = null;
+  pendingImportFileName = '';
+  document.getElementById('importFileChipWrap').innerHTML = '';
+  document.getElementById('importSummaryWrap').innerHTML = '';
+  document.getElementById('importConfirmBtn').disabled = true;
+  document.getElementById('importFileInput').value = '';
+  document.getElementById('importDropZone').classList.remove('hide');
+}
+
+document.getElementById('importDataBtn').addEventListener('click', () => {
+  resetImportSheetUI();
+  openSheet('sheetImportData');
+});
+
+document.getElementById('importFileInput').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  handleImportFile(file);
+});
+
+function handleImportFile(file) {
+  pendingImportFileName = file.name;
+  const chipWrap = document.getElementById('importFileChipWrap');
+  const summaryWrap = document.getElementById('importSummaryWrap');
+  const confirmBtn = document.getElementById('importConfirmBtn');
+
+  chipWrap.innerHTML = `
+    <div class="import-file-chip">
+      <i class="fa-solid fa-file-code"></i>
+      <span>${escapeHtml(file.name)}</span>
+      <button id="importFileClear" aria-label="Remove file"><i class="fa-solid fa-xmark"></i></button>
+    </div>`;
+  document.getElementById('importFileClear').addEventListener('click', resetImportSheetUI);
+
+  if (!file.name.toLowerCase().endsWith('.json') && file.type !== 'application/json') {
+    summaryWrap.innerHTML = `<div class="import-summary" style="background:var(--accent-danger-soft);color:var(--accent-danger);"><i class="fa-solid fa-circle-exclamation"></i> This doesn't look like a .json file. Please choose a RishtaOS backup file.</div>`;
+    confirmBtn.disabled = true;
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!isValidRishtaBackup(parsed)) {
+        summaryWrap.innerHTML = `<div class="import-summary" style="background:var(--accent-danger-soft);color:var(--accent-danger);"><i class="fa-solid fa-circle-exclamation"></i> This file doesn't match the RishtaOS backup format, so it can't be imported safely.</div>`;
+        confirmBtn.disabled = true;
+        pendingImportData = null;
+        return;
+      }
+      pendingImportData = parsed;
+      const nameLine = parsed.profile.name ? `Profile for <strong>${escapeHtml(parsed.profile.name)}</strong>` : 'Profile (no name set)';
+      summaryWrap.innerHTML = `
+        <div class="import-summary">
+          <i class="fa-solid fa-circle-check"></i> Valid RishtaOS backup found.
+          <ul>
+            <li><span>${nameLine}</span></li>
+            <li><span>Special dates</span><span>${parsed.specialDates.length}</span></li>
+            <li><span>Quick notes</span><span>${parsed.notes.length}</span></li>
+            <li><span>Cycle logs</span><span>${parsed.cycles.length}</span></li>
+          </ul>
+        </div>`;
+      confirmBtn.disabled = false;
+    } catch (err) {
+      summaryWrap.innerHTML = `<div class="import-summary" style="background:var(--accent-danger-soft);color:var(--accent-danger);"><i class="fa-solid fa-circle-exclamation"></i> This file couldn't be read as valid JSON. It may be corrupted.</div>`;
+      confirmBtn.disabled = true;
+      pendingImportData = null;
+    }
+  };
+  reader.onerror = () => {
+    summaryWrap.innerHTML = `<div class="import-summary" style="background:var(--accent-danger-soft);color:var(--accent-danger);"><i class="fa-solid fa-circle-exclamation"></i> Could not read this file. Please try again.</div>`;
+    confirmBtn.disabled = true;
+  };
+  reader.readAsText(file);
+}
+
+// Drag & drop support on the drop zone
+const importDropZone = document.getElementById('importDropZone');
+['dragenter', 'dragover'].forEach(evt => {
+  importDropZone.addEventListener(evt, (e) => {
+    e.preventDefault();
+    importDropZone.classList.add('drag-over');
+  });
+});
+['dragleave', 'drop'].forEach(evt => {
+  importDropZone.addEventListener(evt, (e) => {
+    e.preventDefault();
+    importDropZone.classList.remove('drag-over');
+  });
+});
+importDropZone.addEventListener('drop', (e) => {
+  const file = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (file) handleImportFile(file);
+});
+
+document.getElementById('importConfirmBtn').addEventListener('click', async () => {
+  if (!pendingImportData) return;
+  const ok = await askConfirm(
+    'Replace current data?',
+    `Importing "${pendingImportFileName}" will overwrite your current profile, dates, notes, and cycle history on this device. This cannot be undone.`
+  );
+  if (!ok) return;
+  try {
+    state = {
+      ...structuredClone(DEFAULT_STATE),
+      ...pendingImportData,
+      profile: { ...DEFAULT_STATE.profile, ...(pendingImportData.profile || {}) },
+      relationship: { ...DEFAULT_STATE.relationship, ...(pendingImportData.relationship || {}) },
+    };
+    saveState();
+    closeSheet('sheetImportData');
+    resetImportSheetUI();
+    applyTheme();
+    renderCurrentScreen();
+    renderProfile();
+    showToast('Backup imported successfully.');
+  } catch (err) {
+    console.error('RishtaOS: import failed', err);
+    showToast('Something went wrong while importing. Nothing was changed.', 'error');
+  }
 });
 
 // Reset

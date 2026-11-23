@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>RishtaOS · Relationship Companion</title>
 <meta name="description" content="RishtaOS is a private relationship operating system for men: track your relationship uptime, never miss a special date, and stay a step ahead.">
-<meta name="theme-color" content="#741A2F">
+<meta name="theme-color" content="#571F09">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png">
@@ -18,16 +18,19 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
 
 <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 
+<!-- Decorative background pattern (injected by JS based on theme) -->
+<div class="bg-pattern" id="bgPattern" aria-hidden="true"></div>
+
 <!-- Splash -->
 <div class="splash" id="splash">
-  <div class="splash-logo"><img src="./icons/icon-192.png" alt="RishtaOS" width="64" height="64"></div>
+  <div class="splash-logo"><img src="./assets/brand-logo.png" alt="RishtaOS" width="64" height="64"></div>
   <h1>Rishta<span>OS</span></h1>
   <p>Booting relationship kernel…</p>
 </div>
@@ -69,7 +72,7 @@
   <!-- Sidebar (desktop) -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="sl-icon"><img src="./icons/icon-96.png" alt="RishtaOS" width="24" height="24"></div>
+      <div class="sl-icon"><img src="./assets/brand-logo.png" alt="RishtaOS" width="24" height="24"></div>
       <span>Rishta<em>OS</em></span>
     </div>
     <nav class="sidebar-nav" id="sidebarNav">
@@ -78,7 +81,7 @@
       <button class="nav-item" data-screen="dates"><i class="fa-solid fa-calendar-check"></i><span>Special Dates</span></button>
       <button class="nav-item" data-screen="profile"><i class="fa-solid fa-user"></i><span>Profile</span></button>
     </nav>
-    <div class="sidebar-foot">RishtaOS 1.0 · Local-only</div>
+    <div class="sidebar-foot">RishtaOS 2.0 · Local-only</div>
   </aside>
 
   <div class="main-col">
@@ -180,7 +183,7 @@
         <div class="profile-avatar" id="profileAvatar">R</div>
         <h2 id="profileName">Your Name</h2>
         <div class="couple-sub" id="profileCoupleSub">Add your partner's name in settings</div>
-        <div class="release-badge"><i class="fa-solid fa-shield-heart"></i> RishtaOS 1.0</div>
+        <div class="release-badge"><i class="fa-solid fa-shield-heart"></i> RishtaOS 2.0</div>
       </div>
 
       <section class="section">
@@ -226,6 +229,11 @@
             <div class="lr-text"><div class="lr-title">Export my data</div><div class="lr-sub">Download a local backup (.json)</div></div>
             <i class="fa-solid fa-chevron-right lr-chev"></i>
           </button>
+          <button class="list-row" id="importDataBtn">
+            <div class="lr-icon ico-saffron"><i class="fa-solid fa-file-import"></i></div>
+            <div class="lr-text"><div class="lr-title">Import data</div><div class="lr-sub">Restore from a .json backup file</div></div>
+            <i class="fa-solid fa-chevron-right lr-chev"></i>
+          </button>
           <button class="list-row" id="aboutBtn">
             <div class="lr-icon ico-navy"><i class="fa-solid fa-circle-info"></i></div>
             <div class="lr-text"><div class="lr-title">About RishtaOS</div><div class="lr-sub">What this app is & isn't</div></div>
@@ -246,7 +254,7 @@
       </section>
 
       <p class="footnote">
-        RishtaOS 1.0 · Everything stays on your device.<br>Built to help you be a little more prepared.
+        RishtaOS 2.0 · Everything stays on your device.<br>Built to help you be a little more prepared.
       </p>
     </main>
   </div>
@@ -375,6 +383,22 @@
     </div>
     <div class="field-hint u-mb-lg">Logging a couple of cycles helps RishtaOS estimate the next window more accurately.</div>
     <button class="btn btn-teal btn-primary" id="saveCycleBtn">Save entry</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheetImportData">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Import data</h3><button class="sheet-close" data-close="sheetImportData"><i class="fa-solid fa-xmark"></i></button></div>
+    <p class="field-hint u-mb-md">Choose a RishtaOS backup (.json) file exported earlier. We'll check it's valid before anything is changed, and this will replace your current data on this device.</p>
+    <label class="import-drop" id="importDropZone" for="importFileInput">
+      <i class="fa-solid fa-cloud-arrow-up"></i>
+      <strong>Tap to choose a file</strong><br>or drag and drop a .json backup here
+    </label>
+    <input type="file" id="importFileInput" accept="application/json,.json" class="sr-only">
+    <div id="importFileChipWrap"></div>
+    <div id="importSummaryWrap"></div>
+    <button class="btn btn-primary u-mb-sm" id="importConfirmBtn" style="margin-top:16px;" disabled>Review & import</button>
   </div>
 </div>
 

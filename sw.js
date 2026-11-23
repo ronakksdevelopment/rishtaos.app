@@ -1,5 +1,5 @@
 // RishtaOS service worker — offline-friendly app shell caching.
-const CACHE_NAME = 'rishtaos-cache-v2';
+const CACHE_NAME = 'rishtaos-cache-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -20,6 +20,7 @@ const APP_SHELL = [
   './icons/icon-384.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
+  './assets/brand-logo.png',
   './assets/onboard-uptime.jpg',
   './assets/onboard-special-dates.jpg',
   './assets/onboard-support-mode.jpg',
