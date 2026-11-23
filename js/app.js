@@ -637,7 +637,7 @@ document.getElementById('fabAdd').addEventListener('click', openAddDateSheet);
 //   predictions after it.
 // - Duplicate confirmed start dates are rejected.
 // ---------------------------------------------------------------------------
-const PREDICT_AHEAD = 3; // how many future predicted cycles to keep generated at any time
+const PREDICT_AHEAD = 1; // how many future predicted cycles to keep generated at any time
 const AVG_CYCLE_FALLBACK = 28;
 const DEFAULT_PERIOD_LENGTH = 5;
 
@@ -812,7 +812,12 @@ function renderPeriod() {
     <div class="stat-box"><div class="sb-num">${avgLen}</div><div class="sb-lbl">Avg cycle (days)</div></div>
     <div class="stat-box"><div class="sb-num">${confirmed.length}</div><div class="sb-lbl">Confirmed logs</div></div>`;
 
-  historyWrap.innerHTML = all.slice(0, 10).map((c) => {
+  const latestConfirmed = confirmed[confirmed.length - 1];
+  const latestPredicted = state.cycles.find(c => c.status === 'predicted');
+  const historyList = [latestConfirmed, latestPredicted].filter(Boolean)
+    .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+
+  historyWrap.innerHTML = historyList.map((c) => {
     const isPredicted = c.status === 'predicted';
     const dateLabel = c.endDate && c.endDate !== c.startDate
       ? `${formatDateHuman(c.startDate)} – ${formatDateHuman(c.endDate)}`
@@ -1081,20 +1086,32 @@ const BG_PATTERN_ICONS = [
   'fa-gear', 'fa-bell', 'fa-mug-hot', 'fa-camera', 'fa-music',
   'fa-umbrella', 'fa-cloud', 'fa-leaf',
 ];
-const BG_PATTERN_COUNT = 64;
+const BG_GRID_COLS = 7;
+const BG_GRID_ROWS = 9;
 
 function renderBgPattern(isDark) {
   const wrap = document.getElementById('bgPattern');
   if (!wrap) return;
   let html = '';
-  for (let i = 0; i < BG_PATTERN_COUNT; i++) {
-    const icon = BG_PATTERN_ICONS[Math.floor(Math.random() * BG_PATTERN_ICONS.length)];
-    const px = (Math.random() * 100).toFixed(2);
-    const py = (Math.random() * 100).toFixed(2);
-    const size = (14 + Math.random() * 20).toFixed(0); // 14px–34px
-    const rot = (Math.random() * 40 - 20).toFixed(1); // -20deg..20deg
-    const opacity = (0.35 + Math.random() * 0.65).toFixed(2); // varied faintness
-    html += `<i class="fa-solid ${icon}" style="--px:${px}%;--py:${py}%;--ps:${size}px;--pr:${rot}deg;--po:${opacity};"></i>`;
+  let seed = 42;
+  const rand = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+  const cellW = 100 / BG_GRID_COLS;
+  const cellH = 100 / BG_GRID_ROWS;
+  for (let row = 0; row < BG_GRID_ROWS; row++) {
+    for (let col = 0; col < BG_GRID_COLS; col++) {
+      const icon = BG_PATTERN_ICONS[Math.floor(rand() * BG_PATTERN_ICONS.length)];
+      const jitterX = (rand() - 0.5) * cellW * 0.3;
+      const jitterY = (rand() - 0.5) * cellH * 0.3;
+      const px = (col * cellW + cellW / 2 + jitterX).toFixed(2);
+      const py = (row * cellH + cellH / 2 + jitterY).toFixed(2);
+      const size = (16 + rand() * 10).toFixed(0); // 16px–26px
+      const rot = (rand() * 30 - 15).toFixed(1); // -15deg..15deg
+      const opacity = (0.4 + rand() * 0.3).toFixed(2);
+      html += `<i class="fa-solid ${icon}" style="--px:${px}%;--py:${py}%;--ps:${size}px;--pr:${rot}deg;--po:${opacity};"></i>`;
+    }
   }
   wrap.innerHTML = html;
 }
