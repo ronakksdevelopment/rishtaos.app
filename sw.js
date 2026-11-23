@@ -1,9 +1,10 @@
 // RishtaOS service worker — offline-friendly app shell caching.
-const CACHE_NAME = 'rishtaos-cache-v3';
+const CACHE_NAME = 'rishtaos-cache-v4';
 const APP_SHELL = [
   './',
   './index.html',
   './css/style.css',
+  './js/datepicker.js',
   './js/app.js',
   './manifest.json',
   './icons/icon-16.png',

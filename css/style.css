@@ -134,9 +134,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 
 /* ==========================================================================
    Decorative background pattern
-   Light: repeated fa-flower in brown, very low opacity.
-   Dark:  repeated fa-gear in cream, very low opacity.
-   Fixed, behind all content, non-interactive.
+   A subtle, randomly-scattered mix of relationship-themed icons (heart,
+   calendar, note, gift, star, etc.), WhatsApp-wallpaper style: varied
+   icons, sizes, rotations and opacities, never a single repeated glyph.
+   Fixed, behind all content, non-interactive. Icon + position values are
+   generated once per render in JS and applied as inline custom properties.
    ========================================================================== */
 .bg-pattern {
   position: fixed;
@@ -144,22 +146,16 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-auto-rows: 92px;
-  gap: 0;
-  transform: rotate(-6deg) scale(1.2);
 }
 .bg-pattern i {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
+  position: absolute;
+  top: var(--py, 50%);
+  left: var(--px, 50%);
+  font-size: var(--ps, 20px);
   color: var(--bg-pattern-color);
+  opacity: var(--po, 1);
+  transform: translate(-50%, -50%) rotate(var(--pr, 0deg));
 }
-.bg-pattern i:nth-child(3n) { font-size: 16px; }
-.bg-pattern i:nth-child(5n) { font-size: 28px; }
-.bg-pattern i:nth-child(7n) { opacity: 0.6; }
 
 #app, .splash, .onboarding { position: relative; z-index: 1; }
 
@@ -383,6 +379,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .btn-sm { padding: 9px 15px; font-size: 0.82rem; width: auto; }
 .btn-block { width: 100%; }
 .btn[disabled] { opacity: 0.5; pointer-events: none; }
+.btn-spaced { margin-top: 10px; }
+.hide-el { display: none !important; }
 
 /* ==========================================================================
    Quick actions
@@ -765,16 +763,35 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 
 .cycle-history-item {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 0; border-bottom: 1px solid var(--border);
+  width: 100%;
+  padding: 13px 16px; border-bottom: 1px solid var(--border);
+  text-align: left;
 }
 .cycle-history-item:last-child { border-bottom: none; }
-.cycle-history-item .chi-date { font-size: 0.86rem; font-weight: 700; }
-.cycle-history-item .chi-len { font-size: 0.76rem; color: var(--ink-faint); }
-.cycle-history-item .chi-del {
-  color: var(--ink-faint); font-size: 0.9rem;
-  width: 34px; height: 34px; border-radius: 50%;
+.cycle-history-item:active { background: var(--surface-sunken); }
+.cycle-history-item .chi-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.cycle-history-item .chi-icon {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
 }
-.cycle-history-item .chi-del:active { background: var(--surface-sunken); }
+.cycle-history-item .chi-icon-confirmed { background: var(--accent-success-soft); color: var(--accent-success); }
+.cycle-history-item .chi-icon-predicted { background: var(--accent-info-soft); color: var(--accent-info); }
+.cycle-history-item .chi-date { font-size: 0.86rem; font-weight: 700; }
+.cycle-history-item .chi-len { font-size: 0.76rem; color: var(--ink-faint); margin-top: 1px; }
+.cycle-history-item .lr-chev { color: var(--ink-faint); font-size: 0.85rem; flex-shrink: 0; }
+
+/* Progress track gets a secondary "period duration" band layered on top of
+   the elapsed-day fill, so the estimated bleed window is visually distinct
+   from plain cycle progress. */
+.pt-progress-track { position: relative; }
+.pt-progress-period-band {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: var(--accent-rose);
+  opacity: 0.55;
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+}
+.u-pad-note { padding: 14px 16px; }
 
 .stat-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .stat-box {
@@ -997,37 +1014,60 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
    ========================================================================== */
 .data-io-row { display: flex; gap: 10px; margin-top: 4px; }
 .data-io-row .btn { flex: 1; }
+
+/* Import sheet: one vertical flex column with consistent gaps so every
+   piece (drop zone, file chip, summary, confirm button) lines up without
+   relying on ad-hoc margins. */
+.import-io {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 .import-drop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   border: 1.5px dashed var(--border-strong);
   border-radius: var(--radius-sm);
-  padding: 22px 14px;
-  text-align: center;
+  padding: 16px;
+  text-align: left;
   color: var(--ink-muted);
   font-size: 0.84rem;
   cursor: pointer;
   transition: border-color .12s ease, background .12s ease;
 }
 .import-drop:active, .import-drop.drag-over { border-color: var(--accent-rose); background: var(--surface-sunken); }
-.import-drop i { font-size: 1.6rem; color: var(--ink-faint); margin-bottom: 8px; display: block; }
-.import-drop strong { color: var(--ink); }
+.import-drop-icon {
+  flex-shrink: 0;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--brand-soft);
+  color: var(--accent-rose);
+  font-size: 1.15rem;
+}
+[data-theme="dark"] .import-drop-icon { background: var(--surface-sunken); }
+.import-drop-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.import-drop-text strong { color: var(--ink); font-size: 0.88rem; }
+.import-drop-text span { color: var(--ink-faint); font-size: 0.78rem; line-height: 1.4; }
 .import-file-chip {
   display: flex; align-items: center; gap: 10px;
   background: var(--surface-sunken);
   border-radius: var(--radius-sm);
   padding: 11px 13px;
-  margin-top: 10px;
   font-size: 0.82rem;
 }
-.import-file-chip i { color: var(--accent-rose); }
+.import-file-chip i { color: var(--accent-rose); flex-shrink: 0; }
 .import-file-chip span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.import-file-chip button { color: var(--ink-faint); width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; }
+.import-file-chip button { color: var(--ink-faint); width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .import-summary {
   background: var(--accent-info-soft); color: var(--accent-info);
   border-radius: var(--radius-sm); padding: 12px 14px;
-  font-size: 0.8rem; line-height: 1.6; margin-top: 12px;
+  font-size: 0.8rem; line-height: 1.6;
 }
 .import-summary ul { margin-top: 4px; }
-.import-summary li { display: flex; justify-content: space-between; }
+.import-summary li { display: flex; justify-content: space-between; gap: 10px; }
+.import-confirm-btn { margin-top: 2px; }
 
 /* ==========================================================================
    Responsive: tablet / desktop
@@ -1118,3 +1158,131 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
+
+/* ==========================================================================
+   Custom themed date / time pickers
+   Replaces the browser's native calendar/time popups with an in-brand
+   brown/cream picker so the whole app (including form controls) matches
+   the design system. The underlying native <input type="date|time"> stays
+   in the DOM as the real source of truth (readonly, visually hidden behind
+   a styled trigger button) so all existing value-reading/writing JS keeps
+   working unchanged; only the picker UI itself is custom.
+   ========================================================================== */
+.dt-trigger {
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 13px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--ink);
+  text-align: left;
+  transition: border-color .12s ease;
+}
+.dt-trigger:active { border-color: var(--accent-rose); }
+.dt-trigger.has-error-border { border-color: var(--accent-danger); }
+.dt-trigger .dt-trigger-value { color: var(--ink); }
+.dt-trigger .dt-trigger-value.dt-placeholder { color: var(--ink-faint); font-weight: 400; }
+.dt-trigger i { color: var(--ink-faint); font-size: 0.95rem; flex-shrink: 0; }
+
+.dt-overlay {
+  position: fixed; inset: 0; z-index: 80;
+  background: rgba(31, 14, 5, 0.55);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s ease;
+  backdrop-filter: blur(2px);
+}
+.dt-overlay.open { opacity: 1; pointer-events: auto; }
+.dt-panel {
+  background: var(--bg);
+  width: 100%; max-width: 380px;
+  border-radius: 26px 26px 0 0;
+  padding: 10px 18px calc(20px + var(--safe-bottom));
+  transform: translateY(100%);
+  transition: transform .26s cubic-bezier(.2,.8,.3,1);
+  box-shadow: 0 -10px 40px rgba(31,14,5,0.2);
+}
+.dt-overlay.open .dt-panel { transform: translateY(0); }
+@media (min-width: 640px) {
+  .dt-overlay { align-items: center; }
+  .dt-panel { border-radius: 24px; }
+}
+
+.dt-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.dt-panel-head h4 { font-size: 1.02rem; font-family: var(--font-display); }
+.dt-panel-close {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--surface-sunken);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-muted);
+}
+.dt-panel-close:active { background: var(--border); }
+
+/* Calendar */
+.dtc-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.dtc-nav-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--surface-sunken); color: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+}
+.dtc-nav-btn:active { background: var(--border); }
+.dtc-month-label { font-weight: 700; font-size: 0.94rem; font-family: var(--font-display); }
+.dtc-weekdays, .dtc-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+}
+.dtc-weekdays { margin-bottom: 4px; }
+.dtc-weekdays span {
+  text-align: center; font-size: 0.68rem; font-weight: 700;
+  color: var(--ink-faint); text-transform: uppercase; padding: 4px 0;
+}
+.dtc-day {
+  aspect-ratio: 1; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.86rem; color: var(--ink);
+  transition: background .12s ease, color .12s ease;
+}
+.dtc-day:active { background: var(--surface-sunken); }
+.dtc-day.dtc-muted { color: var(--ink-faint); opacity: 0.45; }
+.dtc-day.dtc-today { box-shadow: inset 0 0 0 1.5px var(--accent-rose); }
+.dtc-day.dtc-selected { background: var(--brand); color: var(--ink-on-brand); font-weight: 700; }
+[data-theme="dark"] .dtc-day.dtc-selected { color: var(--brown); }
+.dtc-day.dtc-disabled { opacity: 0.25; pointer-events: none; }
+.dtc-footer { display: flex; gap: 10px; margin-top: 16px; }
+.dtc-footer .btn { flex: 1; }
+
+/* Time picker */
+.dtt-wheel-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 10px 0 18px; }
+.dtt-wheel {
+  flex: 1; max-width: 100px;
+  max-height: 220px; overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  -ms-overflow-style: none; scrollbar-width: none;
+}
+.dtt-wheel::-webkit-scrollbar { display: none; }
+.dtt-wheel-pad { height: 76px; flex-shrink: 0; }
+.dtt-wheel-item {
+  height: 44px; display: flex; align-items: center; justify-content: center;
+  scroll-snap-align: center;
+  font-size: 1rem; color: var(--ink-faint);
+  font-family: var(--font-display); font-weight: 600;
+}
+.dtt-wheel-item.dtt-active { color: var(--ink); font-size: 1.2rem; }
+.dtt-sep { font-size: 1.3rem; font-weight: 700; color: var(--ink-muted); }
+.dtt-meridiem { display: flex; flex-direction: column; gap: 6px; }
+.dtt-meridiem button {
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  background: var(--surface-sunken); color: var(--ink-muted);
+  font-size: 0.78rem; font-weight: 700;
+}
+.dtt-meridiem button.selected { background: var(--brand); color: var(--ink-on-brand); }
+[data-theme="dark"] .dtt-meridiem button.selected { color: var(--brown); }
+.dtt-footer { display: flex; gap: 10px; }
+.dtt-footer .btn { flex: 1; }

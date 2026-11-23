@@ -79,7 +79,7 @@
       <button class="nav-item" data-screen="period"><i class="fa-solid fa-calendar-days"></i><span>Period Tracker</span></button>
       <button class="nav-item nav-home active" data-screen="home"><div class="nav-home-circle"><i class="fa-solid fa-house"></i></div><span>Home</span></button>
       <button class="nav-item" data-screen="dates"><i class="fa-solid fa-calendar-check"></i><span>Special Dates</span></button>
-      <button class="nav-item" data-screen="profile"><i class="fa-solid fa-user"></i><span>Profile</span></button>
+      <button class="nav-item" data-screen="profile"><i class="fa-solid fa-gear"></i><span>Profile</span></button>
     </nav>
     <div class="sidebar-foot">RishtaOS 2.0 · Local-only</div>
   </aside>
@@ -115,7 +115,7 @@
           <button class="quick-action" id="qaAddDate"><div class="qa-icon coral"><i class="fa-solid fa-calendar-plus"></i></div><span class="qa-label">Add Date</span></button>
           <button class="quick-action" id="qaAddNote"><div class="qa-icon saffron"><i class="fa-solid fa-note-sticky"></i></div><span class="qa-label">Quick Note</span></button>
           <button class="quick-action" id="qaPeriod"><div class="qa-icon teal"><i class="fa-solid fa-calendar-days"></i></div><span class="qa-label">Period</span></button>
-          <button class="quick-action" id="qaProfile"><div class="qa-icon navy"><i class="fa-solid fa-user"></i></div><span class="qa-label">Profile</span></button>
+          <button class="quick-action" id="qaProfile"><div class="qa-icon navy"><i class="fa-solid fa-gear"></i></div><span class="qa-label">Profile</span></button>
         </div>
       </section>
 
@@ -173,7 +173,15 @@
           <h2 class="section-title">Cycle history</h2>
           <button class="section-link" id="addCycleBtn">Log date</button>
         </div>
-        <div class="card" id="cycleHistoryWrap"></div>
+        <div class="card card-flush" id="cycleHistoryWrap"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2 class="section-title">Cycle settings</h2>
+          <button class="section-link" id="editCycleSettingsBtn">Edit</button>
+        </div>
+        <div class="card" id="ptSettingsWrap"></div>
       </section>
     </main>
 
@@ -264,7 +272,7 @@
 <nav class="bottom-nav hide" id="bottomNav">
   <button class="nav-item" data-screen="period"><i class="fa-solid fa-calendar-days"></i><span>Period</span></button>
   <button class="nav-item nav-home active" data-screen="home"><div class="nav-home-circle"><i class="fa-solid fa-house"></i></div></button>
-  <button class="nav-item" data-screen="profile"><i class="fa-solid fa-user"></i><span>Profile</span></button>
+  <button class="nav-item" data-screen="profile"><i class="fa-solid fa-gear"></i><span>Profile</span></button>
 </nav>
 
 <button class="fab hide" id="fabAdd" aria-label="Quick add"><i class="fa-solid fa-plus"></i></button>
@@ -375,14 +383,47 @@
 <div class="sheet-overlay" id="sheetAddCycle">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><h3>Log cycle start</h3><button class="sheet-close" data-close="sheetAddCycle"><i class="fa-solid fa-xmark"></i></button></div>
-    <div class="field">
-      <label for="cycleDateInput">Start date</label>
-      <input type="date" id="cycleDateInput">
-      <div class="field-error">Pick a date to log.</div>
+    <div class="sheet-head"><h3 id="cycleSheetHeading">Log period</h3><button class="sheet-close" data-close="sheetAddCycle"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="chip-select u-mb-md" id="cycleStatusChips">
+      <button class="chip-opt" data-status="confirmed"><i class="fa-solid fa-circle-check"></i> Confirmed</button>
+      <button class="chip-opt" data-status="predicted"><i class="fa-solid fa-wand-magic-sparkles"></i> Predicted</button>
     </div>
-    <div class="field-hint u-mb-lg">Logging a couple of cycles helps RishtaOS estimate the next window more accurately.</div>
+    <div class="field-row">
+      <div class="field">
+        <label for="cycleDateInput">Start date</label>
+        <input type="date" id="cycleDateInput">
+        <div class="field-error">Pick a start date.</div>
+      </div>
+      <div class="field">
+        <label for="cycleEndDateInput">End date (optional)</label>
+        <input type="date" id="cycleEndDateInput">
+        <div class="field-error">End date can't be before the start date.</div>
+      </div>
+    </div>
+    <div class="field-hint u-mb-lg" id="cycleSheetHint">Logging a confirmed period helps RishtaOS predict the next window more accurately. Future cycles are generated automatically from your cycle settings.</div>
     <button class="btn btn-teal btn-primary" id="saveCycleBtn">Save entry</button>
+    <button class="btn btn-ghost btn-spaced" id="deleteCycleBtn">Delete this entry</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheetCycleSettings">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><h3>Cycle settings</h3><button class="sheet-close" data-close="sheetCycleSettings"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="field-row">
+      <div class="field">
+        <label for="cycleLengthInput">Average cycle length (days)</label>
+        <input type="number" id="cycleLengthInput" min="15" max="60" inputmode="numeric">
+        <div class="field-error">Enter a value between 15 and 60.</div>
+      </div>
+      <div class="field">
+        <label for="periodLengthInput">Period duration (days)</label>
+        <input type="number" id="periodLengthInput" min="1" max="15" inputmode="numeric">
+        <div class="field-error">Enter a value between 1 and 15.</div>
+      </div>
+    </div>
+    <div class="field-hint u-mb-lg">Used to predict future cycles automatically once a period is confirmed. Changing this recalculates all upcoming predictions, your confirmed history stays untouched.</div>
+    <button class="btn btn-primary" id="saveCycleSettingsBtn">Save settings</button>
   </div>
 </div>
 
@@ -391,14 +432,19 @@
     <div class="sheet-handle"></div>
     <div class="sheet-head"><h3>Import data</h3><button class="sheet-close" data-close="sheetImportData"><i class="fa-solid fa-xmark"></i></button></div>
     <p class="field-hint u-mb-md">Choose a RishtaOS backup (.json) file exported earlier. We'll check it's valid before anything is changed, and this will replace your current data on this device.</p>
-    <label class="import-drop" id="importDropZone" for="importFileInput">
-      <i class="fa-solid fa-cloud-arrow-up"></i>
-      <strong>Tap to choose a file</strong><br>or drag and drop a .json backup here
-    </label>
-    <input type="file" id="importFileInput" accept="application/json,.json" class="sr-only">
-    <div id="importFileChipWrap"></div>
-    <div id="importSummaryWrap"></div>
-    <button class="btn btn-primary u-mb-sm" id="importConfirmBtn" style="margin-top:16px;" disabled>Review & import</button>
+    <div class="import-io">
+      <label class="import-drop" id="importDropZone" for="importFileInput">
+        <div class="import-drop-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <div class="import-drop-text">
+          <strong>Tap to choose a file</strong>
+          <span>or drag and drop a .json backup here</span>
+        </div>
+      </label>
+      <input type="file" id="importFileInput" accept="application/json,.json" class="sr-only">
+      <div id="importFileChipWrap"></div>
+      <div id="importSummaryWrap"></div>
+      <button class="btn btn-primary import-confirm-btn" id="importConfirmBtn" disabled>Review &amp; import</button>
+    </div>
   </div>
 </div>
 
@@ -433,6 +479,7 @@
   </div>
 </div>
 
+<script src="./js/datepicker.js"></script>
 <script src="./js/app.js"></script>
 </body>
 </html>

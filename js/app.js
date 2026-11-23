@@ -21,6 +21,10 @@ const DEFAULT_STATE = {
   specialDates: [],
   notes: [],
   cycles: [],
+  periodSettings: {
+    cycleLength: 28,
+    periodLength: 5,
+  },
 };
 
 const CATEGORY_META = {
@@ -56,6 +60,7 @@ function loadState() {
     return { ...structuredClone(DEFAULT_STATE), ...parsed,
       profile: { ...DEFAULT_STATE.profile, ...(parsed.profile || {}) },
       relationship: { ...DEFAULT_STATE.relationship, ...(parsed.relationship || {}) },
+      periodSettings: { ...DEFAULT_STATE.periodSettings, ...(parsed.periodSettings || {}) },
     };
   } catch (e) {
     console.error('RishtaOS: failed to load state', e);
@@ -612,71 +617,173 @@ document.getElementById('fabAdd').addEventListener('click', openAddDateSheet);
 
 // ---------------------------------------------------------------------------
 // PERIOD TRACKER
+//
+// Data model (state.cycles[]):
+//   { id, startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD'|null,
+//     status: 'confirmed' | 'predicted', confirmedAt?: timestamp }
+//
+// state.periodSettings: { cycleLength: number, periodLength: number }
+//
+// Rules:
+// - Only 'confirmed' entries are real history; they are never auto-deleted
+//   or silently overwritten.
+// - 'predicted' entries are regenerated from scratch every time we render/
+//   recalc: based off the most recent confirmed start date, cycleLength and
+//   periodLength, projecting PREDICT_AHEAD future cycles.
+// - Predictions recalc automatically whenever a confirmed date changes or
+//   cycle settings change.
+// - A predicted entry can be "confirmed" by editing it (dates can be
+//   adjusted) which converts it into real history and regenerates the
+//   predictions after it.
+// - Duplicate confirmed start dates are rejected.
 // ---------------------------------------------------------------------------
+const PREDICT_AHEAD = 3; // how many future predicted cycles to keep generated at any time
 const AVG_CYCLE_FALLBACK = 28;
+const DEFAULT_PERIOD_LENGTH = 5;
+
+function ensurePeriodSettings() {
+  if (!state.periodSettings || typeof state.periodSettings !== 'object') {
+    state.periodSettings = { cycleLength: AVG_CYCLE_FALLBACK, periodLength: DEFAULT_PERIOD_LENGTH };
+  }
+  if (!state.periodSettings.cycleLength) state.periodSettings.cycleLength = AVG_CYCLE_FALLBACK;
+  if (!state.periodSettings.periodLength) state.periodSettings.periodLength = DEFAULT_PERIOD_LENGTH;
+  return state.periodSettings;
+}
+
+// One-time migration from the old { id, date } shape (pre-2.1) to the new
+// { id, startDate, endDate, status } shape. Preserves every existing entry
+// as confirmed history, loses no data.
+function migrateCycleData() {
+  if (!Array.isArray(state.cycles)) { state.cycles = []; return; }
+  let changed = false;
+  state.cycles = state.cycles.map(c => {
+    if (c && typeof c === 'object' && !c.status && c.date) {
+      changed = true;
+      return { id: c.id || uid(), startDate: c.date, endDate: null, status: 'confirmed', confirmedAt: c.confirmedAt || Date.now() };
+    }
+    return c;
+  }).filter(Boolean);
+  ensurePeriodSettings();
+  if (changed) saveState();
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+function daysBetween(a, b) {
+  return Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+}
+
+function getConfirmedCycles() {
+  return state.cycles
+    .filter(c => c.status === 'confirmed')
+    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+}
 
 function getAvgCycleLength() {
-  const cycles = [...state.cycles].sort((a, b) => new Date(a.date) - new Date(b.date));
-  if (cycles.length < 2) return AVG_CYCLE_FALLBACK;
+  const confirmed = getConfirmedCycles();
+  if (confirmed.length < 2) return ensurePeriodSettings().cycleLength;
   let total = 0, count = 0;
-  for (let i = 1; i < cycles.length; i++) {
-    const diff = (new Date(cycles[i].date) - new Date(cycles[i - 1].date)) / 86400000;
+  for (let i = 1; i < confirmed.length; i++) {
+    const diff = daysBetween(confirmed[i - 1].startDate, confirmed[i].startDate);
     if (diff > 10 && diff < 60) { total += diff; count++; }
   }
-  return count > 0 ? Math.round(total / count) : AVG_CYCLE_FALLBACK;
+  return count > 0 ? Math.round(total / count) : ensurePeriodSettings().cycleLength;
+}
+
+// Regenerates the 'predicted' entries from the latest confirmed cycle.
+// Confirmed entries are never touched by this function.
+function recalcPredictedCycles() {
+  ensurePeriodSettings();
+  const confirmed = getConfirmedCycles();
+  // Drop all existing predictions; they're always derived, never hand-authored.
+  state.cycles = state.cycles.filter(c => c.status !== 'predicted');
+
+  if (confirmed.length === 0) { saveState(); return; }
+
+  const { cycleLength, periodLength } = state.periodSettings;
+  const avgLen = getAvgCycleLength();
+  const last = confirmed[confirmed.length - 1];
+  const confirmedStarts = new Set(confirmed.map(c => c.startDate));
+
+  let cursorStart = addDays(last.startDate, avgLen || cycleLength);
+  for (let i = 0; i < PREDICT_AHEAD; i++) {
+    if (!confirmedStarts.has(cursorStart)) {
+      state.cycles.push({
+        id: uid(),
+        startDate: cursorStart,
+        endDate: addDays(cursorStart, Math.max(0, periodLength - 1)),
+        status: 'predicted',
+      });
+    }
+    cursorStart = addDays(cursorStart, cycleLength);
+  }
+  saveState();
 }
 
 function renderPeriod() {
-  const cycles = [...state.cycles].sort((a, b) => new Date(b.date) - new Date(a.date));
+  ensurePeriodSettings();
+  recalcPredictedCycles();
+
+  const all = [...state.cycles].sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+  const confirmed = getConfirmedCycles();
   const statusWrap = document.getElementById('ptStatusWrap');
   const weekWrap = document.getElementById('ptWeekWrap');
   const monthWrap = document.getElementById('ptMonthWrap');
   const historyWrap = document.getElementById('cycleHistoryWrap');
+  const settingsWrap = document.getElementById('ptSettingsWrap');
 
-  if (cycles.length === 0) {
+  renderCycleSettingsCard(settingsWrap);
+
+  if (confirmed.length === 0) {
     statusWrap.innerHTML = `
       <div class="card empty-state">
         <div class="es-icon"><i class="fa-solid fa-calendar-days"></i></div>
         <h4>No cycle data yet</h4>
-        <p>Log a start date to begin estimating timelines. It's private and stays on this device.</p>
+        <p>Log your first confirmed period start date to begin automatic predictions. It's private and stays on this device.</p>
         <button class="btn btn-primary btn-inline" id="emptyAddCycleBtn">Log a date</button>
       </div>`;
-    document.getElementById('emptyAddCycleBtn').addEventListener('click', openAddCycleSheet);
+    document.getElementById('emptyAddCycleBtn').addEventListener('click', () => openAddCycleSheet());
     weekWrap.innerHTML = `<p class="muted-note">Nothing to show yet.</p>`;
-    monthWrap.innerHTML = `<div class="stat-box"><div class="sb-num">--</div><div class="sb-lbl">Avg cycle</div></div><div class="stat-box"><div class="sb-num">${cycles.length}</div><div class="sb-lbl">Logged entries</div></div>`;
-    historyWrap.innerHTML = `<p class="muted-note">No history logged.</p>`;
+    monthWrap.innerHTML = `<div class="stat-box"><div class="sb-num">${state.periodSettings.cycleLength}</div><div class="sb-lbl">Cycle length (days)</div></div><div class="stat-box"><div class="sb-num">0</div><div class="sb-lbl">Confirmed logs</div></div>`;
+    historyWrap.innerHTML = `<p class="muted-note u-pad-note">No history logged.</p>`;
     return;
   }
 
   const avgLen = getAvgCycleLength();
-  const lastStart = new Date(cycles[0].date + 'T00:00:00');
-  const nextEstimate = new Date(lastStart.getTime() + avgLen * 86400000);
+  const { periodLength } = state.periodSettings;
+  const last = confirmed[confirmed.length - 1];
+  const lastStart = new Date(last.startDate + 'T00:00:00');
+  const nextEstimateStart = addDays(last.startDate, avgLen);
+  const nextEstimateEnd = addDays(nextEstimateStart, Math.max(0, periodLength - 1));
   const now = new Date();
   const dayInCycle = Math.floor((now - lastStart) / 86400000) + 1;
-  const daysToNext = Math.ceil((nextEstimate - now) / 86400000);
+  const daysToNext = Math.ceil((new Date(nextEstimateStart + 'T00:00:00') - now) / 86400000);
 
   // Single source of truth for cycle phase — everything below (headline, progress bar,
   // and the "This week" copy) derives from this one value so the messaging can never
   // contradict itself across cards.
-  const IN_WINDOW_DAYS = 5;      // typical bleed-window length used for the estimate
-  const APPROACHING_DAYS = 3;    // "heads up" window before the next estimated start
+  const APPROACHING_DAYS = 3; // "heads up" window before the next estimated start
 
   let phase, phaseLabel, headline, weekCopy;
-  if (dayInCycle <= IN_WINDOW_DAYS) {
+  if (dayInCycle >= 1 && dayInCycle <= periodLength) {
     phase = 'in-window';
-    phaseLabel = 'Estimated: Period window';
-    headline = `Day ${dayInCycle} of the estimated window`;
-    weekCopy = "Likely in the estimated period window this week. A little extra patience and comfort go a long way.";
+    phaseLabel = 'Confirmed: Period window';
+    headline = `Day ${dayInCycle} of the current period`;
+    weekCopy = "Currently in the confirmed period window. A little extra patience and comfort go a long way.";
   } else if (daysToNext <= APPROACHING_DAYS) {
     phase = 'approaching';
-    phaseLabel = 'Estimated: Period approaching';
+    phaseLabel = 'Predicted: Period approaching';
     headline = daysToNext > 0 ? `Next window in ~${daysToNext} day${daysToNext === 1 ? '' : 's'}` : 'Expected window now';
-    weekCopy = "Getting closer to the estimated window, might be worth keeping her favourite snack handy.";
+    weekCopy = "Getting closer to the predicted window, might be worth keeping her favourite snack handy.";
   } else {
     phase = 'mid-cycle';
-    phaseLabel = 'Estimated: Mid-cycle';
+    phaseLabel = 'Predicted: Mid-cycle';
     headline = `Next window in ~${daysToNext} days`;
-    weekCopy = "No major changes expected this week based on current estimates.";
+    weekCopy = "No major changes expected this week based on current predictions.";
   }
 
   const progressPct = Math.min(100, Math.max(0, Math.round((dayInCycle / avgLen) * 100)));
@@ -685,63 +792,205 @@ function renderPeriod() {
     <div class="pt-status-card">
       <div class="pt-phase">${phaseLabel}</div>
       <div class="pt-big">${headline}</div>
-      <div class="pt-progress-track"><div class="pt-progress-fill" style="width:${progressPct}%;"></div></div>
+      <div class="pt-progress-track" role="img" aria-label="Cycle day ${dayInCycle} of ${avgLen}">
+        <div class="pt-progress-fill" style="width:${progressPct}%;"></div>
+        <div class="pt-progress-period-band" style="width:${Math.min(100, Math.round((periodLength / avgLen) * 100))}%;"></div>
+      </div>
       <div class="pt-meta-row">
-        <span>Day ${dayInCycle} of ~${avgLen}</span>
-        <span>Est. next: ${nextEstimate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+        <span>Day ${Math.max(1, dayInCycle)} of ~${avgLen}</span>
+        <span>Predicted next: ${formatDateHuman(nextEstimateStart)}–${formatDateHuman(nextEstimateEnd)}</span>
       </div>
     </div>
     <div class="pt-log-row">
-      <button class="btn btn-ghost btn-sm" id="addCycleBtn2"><i class="fa-solid fa-plus"></i> Log new start date</button>
+      <button class="btn btn-ghost btn-sm" id="addCycleBtn2"><i class="fa-solid fa-plus"></i> Log new period</button>
     </div>`;
-  document.getElementById('addCycleBtn2').addEventListener('click', openAddCycleSheet);
+  document.getElementById('addCycleBtn2').addEventListener('click', () => openAddCycleSheet());
 
   weekWrap.innerHTML = `<p class="week-copy">${weekCopy}</p>`;
 
   monthWrap.innerHTML = `
     <div class="stat-box"><div class="sb-num">${avgLen}</div><div class="sb-lbl">Avg cycle (days)</div></div>
-    <div class="stat-box"><div class="sb-num">${cycles.length}</div><div class="sb-lbl">Logged entries</div></div>`;
+    <div class="stat-box"><div class="sb-num">${confirmed.length}</div><div class="sb-lbl">Confirmed logs</div></div>`;
 
-  historyWrap.innerHTML = cycles.slice(0, 6).map((c, i) => {
-    const prevCycle = cycles[i + 1];
-    const len = prevCycle ? Math.round((new Date(c.date) - new Date(prevCycle.date)) / 86400000) : null;
+  historyWrap.innerHTML = all.slice(0, 10).map((c) => {
+    const isPredicted = c.status === 'predicted';
+    const dateLabel = c.endDate && c.endDate !== c.startDate
+      ? `${formatDateHuman(c.startDate)} – ${formatDateHuman(c.endDate)}`
+      : formatDateHuman(c.startDate);
     return `
-      <div class="cycle-history-item" data-id="${c.id}">
-        <div>
-          <div class="chi-date">${formatDateHuman(c.date)}</div>
-          ${len ? `<div class="chi-len">${len}-day cycle</div>` : `<div class="chi-len">Most recent</div>`}
+      <button class="cycle-history-item" data-id="${c.id}" data-status="${c.status}">
+        <div class="chi-left">
+          <div class="chi-icon ${isPredicted ? 'chi-icon-predicted' : 'chi-icon-confirmed'}"><i class="fa-solid ${isPredicted ? 'fa-wand-magic-sparkles' : 'fa-circle-check'}"></i></div>
+          <div>
+            <div class="chi-date">${dateLabel}</div>
+            <div class="chi-len">${isPredicted ? 'Predicted' : 'Confirmed'}</div>
+          </div>
         </div>
-        <button class="chi-del" data-del="${c.id}" aria-label="Delete entry"><i class="fa-solid fa-xmark"></i></button>
-      </div>`;
+        <i class="fa-solid fa-chevron-right lr-chev"></i>
+      </button>`;
   }).join('');
 
-  historyWrap.querySelectorAll('[data-del]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const ok = await askConfirm('Delete this entry?', 'This cycle log will be removed.');
-      if (!ok) return;
-      state.cycles = state.cycles.filter(c => c.id !== btn.dataset.del);
-      saveState();
-      renderPeriod();
-      showToast('Entry removed.');
+  historyWrap.querySelectorAll('.cycle-history-item').forEach(row => {
+    row.addEventListener('click', () => {
+      const cycle = state.cycles.find(c => c.id === row.dataset.id);
+      if (cycle) openAddCycleSheet(cycle);
     });
   });
 }
 
-function openAddCycleSheet() {
-  document.getElementById('cycleDateInput').value = '';
+function renderCycleSettingsCard(wrap) {
+  if (!wrap) return;
+  const { cycleLength, periodLength } = ensurePeriodSettings();
+  wrap.innerHTML = `
+    <div class="stat-pair">
+      <div class="stat-box"><div class="sb-num">${cycleLength}</div><div class="sb-lbl">Cycle length (days)</div></div>
+      <div class="stat-box"><div class="sb-num">${periodLength}</div><div class="sb-lbl">Period duration (days)</div></div>
+    </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Add / edit cycle sheet — handles both logging a brand-new entry and
+// editing/confirming an existing confirmed or predicted entry.
+// ---------------------------------------------------------------------------
+let editingCycleId = null;
+
+function openAddCycleSheet(existing) {
+  editingCycleId = existing ? existing.id : null;
   clearFieldErrors('sheetAddCycle');
+
+  const heading = document.getElementById('cycleSheetHeading');
+  const hint = document.getElementById('cycleSheetHint');
+  const deleteBtn = document.getElementById('deleteCycleBtn');
+  const statusChips = document.getElementById('cycleStatusChips');
+
+  if (existing) {
+    heading.textContent = existing.status === 'predicted' ? 'Confirm predicted period' : 'Edit period log';
+    hint.textContent = existing.status === 'predicted'
+      ? 'This is an automatic prediction. Adjust the dates if needed and confirm it once the period actually starts, that turns it into real history and recalculates future predictions.'
+      : 'Editing a confirmed entry recalculates all predicted cycles that follow it.';
+    document.getElementById('cycleDateInput').value = existing.startDate;
+    document.getElementById('cycleEndDateInput').value = existing.endDate || '';
+    deleteBtn.classList.remove('hide-el');
+    setCycleStatusChip(existing.status);
+  } else {
+    heading.textContent = 'Log period';
+    hint.textContent = 'Logging a confirmed period helps RishtaOS predict the next window more accurately. Future cycles are generated automatically from your cycle settings.';
+    document.getElementById('cycleDateInput').value = '';
+    document.getElementById('cycleEndDateInput').value = '';
+    deleteBtn.classList.add('hide-el');
+    setCycleStatusChip('confirmed');
+  }
+
   openSheet('sheetAddCycle');
 }
-document.getElementById('addCycleBtn').addEventListener('click', openAddCycleSheet);
+
+function setCycleStatusChip(status) {
+  document.querySelectorAll('#cycleStatusChips .chip-opt').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.status === status);
+  });
+}
+
+document.getElementById('cycleStatusChips').addEventListener('click', (e) => {
+  const btn = e.target.closest('.chip-opt');
+  if (!btn) return;
+  setCycleStatusChip(btn.dataset.status);
+});
+
+document.getElementById('addCycleBtn').addEventListener('click', () => openAddCycleSheet());
+
 document.getElementById('saveCycleBtn').addEventListener('click', () => {
-  const date = document.getElementById('cycleDateInput').value;
   clearFieldErrors('sheetAddCycle');
-  if (!date) { document.getElementById('cycleDateInput').closest('.field').classList.add('has-error'); return; }
-  state.cycles.push({ id: uid(), date });
+  const startDate = document.getElementById('cycleDateInput').value;
+  const endDateRaw = document.getElementById('cycleEndDateInput').value;
+  const selectedChip = document.querySelector('#cycleStatusChips .chip-opt.selected');
+  const status = selectedChip ? selectedChip.dataset.status : 'confirmed';
+
+  if (!startDate) {
+    document.getElementById('cycleDateInput').closest('.field').classList.add('has-error');
+    return;
+  }
+  if (endDateRaw && daysBetween(startDate, endDateRaw) < 0) {
+    document.getElementById('cycleEndDateInput').closest('.field').classList.add('has-error');
+    return;
+  }
+  const endDate = endDateRaw || null;
+
+  // Duplicate prevention: no two CONFIRMED entries may share a start date.
+  if (status === 'confirmed') {
+    const dupe = state.cycles.find(c => c.status === 'confirmed' && c.startDate === startDate && c.id !== editingCycleId);
+    if (dupe) {
+      document.getElementById('cycleDateInput').closest('.field').classList.add('has-error');
+      document.getElementById('cycleDateInput').closest('.field').querySelector('.field-error').textContent = 'A confirmed period already starts on this date.';
+      return;
+    }
+  }
+
+  if (editingCycleId) {
+    const idx = state.cycles.findIndex(c => c.id === editingCycleId);
+    if (idx !== -1) {
+      const wasPredicted = state.cycles[idx].status === 'predicted';
+      state.cycles[idx] = {
+        ...state.cycles[idx],
+        startDate, endDate, status,
+        confirmedAt: status === 'confirmed' ? (state.cycles[idx].confirmedAt || Date.now()) : null,
+      };
+      showToast(status === 'confirmed' && wasPredicted ? 'Confirmed. Future cycles recalculated.' : 'Entry updated.');
+    }
+  } else {
+    state.cycles.push({ id: uid(), startDate, endDate, status, confirmedAt: status === 'confirmed' ? Date.now() : null });
+    showToast(status === 'confirmed' ? 'Logged. Thanks for staying on top of this.' : 'Prediction saved.');
+  }
+
   saveState();
   closeSheet('sheetAddCycle');
-  showToast('Logged. Thanks for staying on top of this.');
   renderPeriod();
+});
+
+document.getElementById('deleteCycleBtn').addEventListener('click', async () => {
+  if (!editingCycleId) return;
+  const ok = await askConfirm('Delete this entry?', 'This cycle log will be removed. Future predictions will be recalculated.');
+  if (!ok) return;
+  state.cycles = state.cycles.filter(c => c.id !== editingCycleId);
+  saveState();
+  closeSheet('sheetAddCycle');
+  renderPeriod();
+  showToast('Entry removed.');
+});
+
+// ---------------------------------------------------------------------------
+// Cycle settings sheet
+// ---------------------------------------------------------------------------
+document.getElementById('editCycleSettingsBtn').addEventListener('click', () => {
+  ensurePeriodSettings();
+  clearFieldErrors('sheetCycleSettings');
+  document.getElementById('cycleLengthInput').value = state.periodSettings.cycleLength;
+  document.getElementById('periodLengthInput').value = state.periodSettings.periodLength;
+  openSheet('sheetCycleSettings');
+});
+
+document.getElementById('saveCycleSettingsBtn').addEventListener('click', () => {
+  clearFieldErrors('sheetCycleSettings');
+  const cycleLength = parseInt(document.getElementById('cycleLengthInput').value, 10);
+  const periodLength = parseInt(document.getElementById('periodLengthInput').value, 10);
+
+  let hasError = false;
+  if (!Number.isFinite(cycleLength) || cycleLength < 15 || cycleLength > 60) {
+    document.getElementById('cycleLengthInput').closest('.field').classList.add('has-error');
+    hasError = true;
+  }
+  if (!Number.isFinite(periodLength) || periodLength < 1 || periodLength > 15) {
+    document.getElementById('periodLengthInput').closest('.field').classList.add('has-error');
+    hasError = true;
+  }
+  if (hasError) return;
+
+  ensurePeriodSettings();
+  state.periodSettings.cycleLength = cycleLength;
+  state.periodSettings.periodLength = periodLength;
+  saveState();
+  closeSheet('sheetCycleSettings');
+  renderPeriod();
+  showToast('Cycle settings saved. Predictions recalculated.');
 });
 
 // ---------------------------------------------------------------------------
@@ -817,18 +1066,35 @@ function applyTheme() {
 
 // ---------------------------------------------------------------------------
 // Decorative background pattern
-// Light mode: repeated fa-flower icons in brown, low opacity.
-// Dark mode:  repeated fa-gear icons in cream, low opacity.
+// A subtle, randomly-scattered mix of relationship-themed icons (heart,
+// calendar, gift, note, star, etc.) in low opacity, WhatsApp-wallpaper
+// style: varied icons, sizes, rotations and positions, never one repeated
+// glyph. Same icon pool in both themes; only the color token changes.
 // Purely decorative, sits behind all content (aria-hidden, pointer-events:none).
+// Regenerated once per theme change so the scatter stays fresh but stable
+// for the duration of a session (not re-randomized on every re-render call
+// elsewhere in the app, since this is only invoked from applyTheme()).
 // ---------------------------------------------------------------------------
+const BG_PATTERN_ICONS = [
+  'fa-heart', 'fa-calendar-days', 'fa-gift', 'fa-note-sticky',
+  'fa-star', 'fa-calendar-check', 'fa-cake-candles', 'fa-comments',
+  'fa-gear', 'fa-bell', 'fa-mug-hot', 'fa-camera', 'fa-music',
+  'fa-umbrella', 'fa-cloud', 'fa-leaf',
+];
+const BG_PATTERN_COUNT = 64;
+
 function renderBgPattern(isDark) {
   const wrap = document.getElementById('bgPattern');
   if (!wrap) return;
-  const iconClass = isDark ? 'fa-gear' : 'fa-flower';
-  const COUNT = 90;
   let html = '';
-  for (let i = 0; i < COUNT; i++) {
-    html += `<i class="fa-solid ${iconClass}"></i>`;
+  for (let i = 0; i < BG_PATTERN_COUNT; i++) {
+    const icon = BG_PATTERN_ICONS[Math.floor(Math.random() * BG_PATTERN_ICONS.length)];
+    const px = (Math.random() * 100).toFixed(2);
+    const py = (Math.random() * 100).toFixed(2);
+    const size = (14 + Math.random() * 20).toFixed(0); // 14px–34px
+    const rot = (Math.random() * 40 - 20).toFixed(1); // -20deg..20deg
+    const opacity = (0.35 + Math.random() * 0.65).toFixed(2); // varied faintness
+    html += `<i class="fa-solid ${icon}" style="--px:${px}%;--py:${py}%;--ps:${size}px;--pr:${rot}deg;--po:${opacity};"></i>`;
   }
   wrap.innerHTML = html;
 }
@@ -975,7 +1241,9 @@ document.getElementById('importConfirmBtn').addEventListener('click', async () =
       ...pendingImportData,
       profile: { ...DEFAULT_STATE.profile, ...(pendingImportData.profile || {}) },
       relationship: { ...DEFAULT_STATE.relationship, ...(pendingImportData.relationship || {}) },
+      periodSettings: { ...DEFAULT_STATE.periodSettings, ...(pendingImportData.periodSettings || {}) },
     };
+    migrateCycleData();
     saveState();
     closeSheet('sheetImportData');
     resetImportSheetUI();
@@ -1135,6 +1403,7 @@ function completeOnboarding() {
 // Boot
 // ---------------------------------------------------------------------------
 function boot() {
+  migrateCycleData();
   applyTheme();
 
   setTimeout(() => {
